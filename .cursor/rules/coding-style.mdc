@@ -1,0 +1,210 @@
+---
+description: coding-style
+globs:
+alwaysApply: false
+---
+# Rune Caster - 코딩 스타일 가이드
+
+## 🎯 핵심 설계 원칙
+
+Rune Caster는 **STL 스타일 API**를 따릅니다:
+- 직관적이고 익숙한 인터페이스
+- Zero-cost abstractions
+- C++20 Modern Features 적극 활용
+
+## 📝 네이밍 규칙
+
+### 클래스 및 타입 (PascalCase)
+```cpp
+class Rune;
+class RuneSequence;
+enum class LanguageCode;
+template<typename T> concept RuneLike;
+```
+
+### 함수 및 변수 (snake_case)
+```cpp
+void process_text(const RuneView& input);
+auto language_code = detect_language(text);
+bool is_valid_input = validate(data);
+```
+
+### 멤버 변수 (trailing underscore)
+```cpp
+class Rune {
+private:
+    char32_t codepoint_;
+    language::Code language_;
+    std::string phoneme_;
+};
+```
+
+### 상수 (SCREAMING_SNAKE_CASE)
+```cpp
+constexpr std::size_t MAX_PHONEME_LENGTH = 32;
+constexpr char32_t INVALID_CODEPOINT = 0xFFFFFFFF;
+```
+
+## 🏗️ STL 스타일 패턴
+
+### 컨테이너 인터페이스
+[rune_sequence.hpp](mdc:include/rune_caster/rune_sequence.hpp)를 참조:
+
+```cpp
+class RuneSequence {
+public:
+    // STL 타입 정의
+    using value_type = Rune;
+    using iterator = std::vector<Rune>::iterator;
+    using const_iterator = std::vector<Rune>::const_iterator;
+
+    // STL 메서드들
+    iterator begin() noexcept;
+    iterator end() noexcept;
+    size_type size() const noexcept;
+    bool empty() const noexcept;
+
+    // 원소 접근
+    reference operator[](size_type pos) noexcept;
+    reference at(size_type pos);
+};
+```
+
+### C++20 Concepts 사용
+[concepts.hpp](mdc:include/rune_caster/concepts.hpp)를 참조:
+
+```cpp
+template<typename T>
+concept RuneLike = requires(T t) {
+    { t.codepoint() } -> std::convertible_to<char32_t>;
+    { t.language() } -> std::convertible_to<language::Code>;
+};
+
+template<typename T>
+concept RuneContainer = requires(T t) {
+    typename T::value_type;
+    requires RuneLike<typename T::value_type>;
+    { t.begin() } -> std::input_iterator;
+    { t.end() } -> std::input_iterator;
+};
+```
+
+## 🛡️ 타입 안전성
+
+### noexcept 지정
+```cpp
+// 예외를 던지지 않는 함수들
+constexpr char32_t codepoint() const noexcept;
+constexpr bool is_valid() const noexcept;
+language::Code detect_language(char32_t cp) noexcept;
+```
+
+### [[nodiscard]] 속성
+```cpp
+// 반환값을 무시하면 안 되는 함수들
+[[nodiscard]] bool empty() const noexcept;
+[[nodiscard]] std::string to_utf8() const;
+[[nodiscard]] static RuneSequence from_utf8(std::string_view utf8_text);
+```
+
+### constexpr 사용
+```cpp
+// 컴파일 타임 계산 가능한 함수들
+constexpr bool is_hangul(char32_t cp) noexcept;
+constexpr bool is_latin(char32_t cp) noexcept;
+constexpr unicode::Category get_category(char32_t cp) noexcept;
+```
+
+## 🔧 구현 패턴
+
+### RAII 및 Rule of 5
+[rune.hpp](mdc:include/rune_caster/rune.hpp)를 참조:
+
+```cpp
+class Rune {
+public:
+    // Rule of 5 - 기본 구현 사용
+    Rune(const Rune&) = default;
+    Rune(Rune&&) noexcept = default;
+    Rune& operator=(const Rune&) = default;
+    Rune& operator=(Rune&&) noexcept = default;
+    ~Rune() = default;
+};
+```
+
+### 안전한 타입 변환
+```cpp
+// 명시적 변환
+explicit Rune(char32_t codepoint) noexcept;
+
+// 팩토리 메서드
+static Rune from_utf8(std::string_view utf8_char);
+static RuneSequence from_utf8(std::string_view utf8_text);
+```
+
+### 오류 처리
+```cpp
+// 범위 검사
+reference at(size_type pos);  // throws std::out_of_range
+
+// 안전한 접근
+reference operator[](size_type pos) noexcept;  // no bounds check
+
+// 예외 전파
+static Rune from_utf8(std::string_view utf8_char);  // throws on invalid UTF-8
+```
+
+## 📚 문서화 스타일
+
+### Doxygen 주석 패턴
+```cpp
+/**
+ * @brief Unicode 문자를 표현하는 기본 클래스
+ *
+ * @param codepoint 유효한 Unicode 코드포인트
+ * @return 생성된 Rune 객체
+ * @throws std::invalid_argument 잘못된 코드포인트
+ *
+ * @example
+ * @code
+ * auto rune = Rune{U'가'};
+ * std::cout << rune.to_utf8() << std::endl;
+ * @endcode
+ */
+```
+
+## 🎨 코드 포맷팅
+
+### 헤더 포함 순서
+```cpp
+// 1. 해당 클래스의 헤더
+#include "rune_caster/rune.hpp"
+
+// 2. 프로젝트 헤더들
+#include "rune_caster/unicode.hpp"
+#include "rune_caster/language.hpp"
+
+// 3. 표준 라이브러리
+#include <string>
+#include <vector>
+#include <iostream>
+```
+
+### 네임스페이스 사용
+```cpp
+namespace rune_caster {
+namespace language {
+
+// 구현...
+
+}  // namespace language
+}  // namespace rune_caster
+```
+
+## 🔍 예제 참조
+
+좋은 스타일의 예제들:
+- [rune.hpp](mdc:include/rune_caster/rune.hpp) - 클래스 설계
+- [rune.cpp](mdc:src/rune/rune.cpp) - 구현 패턴
+- [basic_usage.cpp](mdc:examples/basic_usage.cpp) - 사용법 예제
+- [test_rune.cpp](mdc:tests/unit/test_rune.cpp) - 테스트 작성 스타일

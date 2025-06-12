@@ -1,0 +1,242 @@
+---
+description: 성능 최적화와 디버깅 워크플로우
+globs:
+alwaysApply: false
+---
+# Rune Caster - 개발 워크플로우 가이드
+
+## 🚀 개발 시작하기
+
+### 1. 환경 확인
+```bash
+# 빌드 테스트 (현재 성공 상태)
+mkdir build && cd build
+cmake ..
+cmake --build . --config Release
+```
+
+### 2. 개발 모드 빌드
+```bash
+# 디버그 빌드 + 모든 옵션 활성화
+cmake .. -DCMAKE_BUILD_TYPE=Debug \
+         -DRUNE_CASTER_ENABLE_TESTS=ON \
+         -DRUNE_CASTER_ENABLE_EXAMPLES=ON
+```
+
+## 🔄 개발 사이클
+
+### 새로운 기능 추가 순서
+
+1. **헤더 파일 정의** - [include/rune_caster/](mdc:include/rune_caster)
+   ```cpp
+   // 새 클래스나 함수 선언
+   class NewFeature {
+       // 인터페이스 정의
+   };
+   ```
+
+2. **구현 파일 작성** - [src/](mdc:src)
+   ```cpp
+   // 실제 구현
+   #include "rune_caster/new_feature.hpp"
+   ```
+
+3. **예제 코드 작성** - [examples/](mdc:examples)
+   ```cpp
+   // 사용법 보여주는 예제
+   #include "rune_caster/new_feature.hpp"
+   int main() { /* 사용 예제 */ }
+   ```
+
+4. **단위 테스트 작성** - [tests/unit/](mdc:tests/unit)
+   ```cpp
+   // Google Test 기반 테스트
+   TEST(NewFeatureTest, BasicUsage) { /* 테스트 코드 */ }
+   ```
+
+5. **CMake 업데이트** - [CMakeLists.txt](mdc:CMakeLists.txt)
+   ```cmake
+   # 새 소스 파일 추가
+   target_sources(rune_caster PRIVATE src/new_feature.cpp)
+   ```
+
+### 빌드 → 테스트 → 반복
+```bash
+# 빠른 빌드 테스트
+cmake --build . --config Debug --parallel 4
+
+# 예제 실행으로 동작 확인
+.\examples\Debug\basic_usage.exe
+
+# 단위 테스트 실행 (구현되면)
+ctest --parallel --output-on-failure
+```
+
+## 🧪 테스트 주도 개발
+
+### 현재 작동하는 테스트
+[test_rune.cpp](mdc:tests/unit/test_rune.cpp)를 참조:
+
+```cpp
+TEST_F(RuneTest, BasicConstruction) {
+    Rune rune(U'A');
+    EXPECT_EQ(rune.codepoint(), U'A');
+    EXPECT_EQ(rune.language(), language::Code::English);
+}
+```
+
+### 새 테스트 작성 패턴
+```cpp
+// 1. 테스트 클래스 정의
+class NewFeatureTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        // 테스트 준비
+    }
+};
+
+// 2. 개별 테스트 케이스
+TEST_F(NewFeatureTest, FeatureName) {
+    // Given
+    auto input = create_test_input();
+
+    // When
+    auto result = feature.process(input);
+
+    // Then
+    EXPECT_TRUE(result.is_valid());
+    EXPECT_EQ(result.value(), expected_value);
+}
+```
+
+## 🏗️ 아키텍처 확장
+
+### Rune-Spell-Caster 패턴 따르기
+
+#### 1. Rune (Container) 확장
+```cpp
+// 새로운 컨테이너 타입
+class NewRuneContainer {
+public:
+    // STL 호환 인터페이스
+    using value_type = Rune;
+    using iterator = /* 적절한 iterator */;
+
+    iterator begin();
+    iterator end();
+    size_type size() const;
+};
+```
+
+#### 2. Spell (Algorithm) 확장
+```cpp
+// 새로운 알고리즘
+class NewSpell {
+public:
+    using input_type = RuneSequence;
+    using output_type = RuneSequence;
+
+    output_type process(const input_type& input) const;
+    std::string description() const override;
+};
+```
+
+#### 3. Caster (Pipeline) 확장
+```cpp
+// 새로운 실행 엔진
+template<typename SpellType>
+class NewCaster {
+public:
+    template<typename Input>
+    auto cast(Input&& input) const;
+};
+```
+
+## 📊 성능 최적화 워크플로우
+
+### 1. 벤치마크 작성
+```cpp
+// tests/benchmark/new_feature_benchmark.cpp
+static void BM_NewFeature(benchmark::State& state) {
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(test_function());
+    }
+}
+BENCHMARK(BM_NewFeature);
+```
+
+### 2. 프로파일링
+```bash
+# Release 빌드로 성능 측정
+cmake .. -DCMAKE_BUILD_TYPE=Release -DRUNE_CASTER_ENABLE_BENCHMARKS=ON
+cmake --build .
+.\tests\benchmark\Release\benchmarks.exe
+```
+
+### 3. 최적화 적용
+- `constexpr` 추가로 컴파일 타임 계산
+- `noexcept` 지정으로 성능 향상
+- 불필요한 복사 제거 (`std::move`, perfect forwarding)
+
+## 🐛 디버깅 워크플로우
+
+### 현재 사용 가능한 디버깅 도구
+
+#### 1. Unicode 디버깅
+[unicode_test.cpp](mdc:examples/unicode_test.cpp) 실행:
+```bash
+.\examples\Release\unicode_test.exe
+```
+
+출력 예시:
+```
+1. Hiragana 'あ' analysis:
+  Codepoint: U+3042
+  UTF-8 bytes: 0xE3 0x81 0x82
+```
+
+#### 2. 기본 기능 디버깅
+[basic_usage.cpp](mdc:examples/basic_usage.cpp) 실행:
+```bash
+.\examples\Release\basic_usage.exe
+```
+
+#### 3. 시퀀스 처리 디버깅
+[sequence_usage.cpp](mdc:examples/sequence_usage.cpp) 실행:
+```bash
+.\examples\Release\sequence_usage.exe
+```
+
+### 디버그 빌드 사용
+```bash
+# 디버그 정보 포함 빌드
+cmake .. -DCMAKE_BUILD_TYPE=Debug
+cmake --build . --config Debug
+
+# Visual Studio 디버거 연결 가능
+```
+
+## 📖 문서화 워크플로우
+
+### 1. API 문서 업데이트
+[docs/api-design.md](mdc:docs/api-design.md)에 새 기능 추가
+
+### 2. 사용 예제 추가
+[examples/](mdc:examples)에 실제 동작하는 예제 추가
+
+### 3. 아키텍처 문서 업데이트
+[docs/technical-architecture.md](mdc:docs/technical-architecture.md) 수정
+
+### 4. 빌드 상태 업데이트
+[BUILD_STATUS.md](mdc:BUILD_STATUS.md)에 변경사항 기록
+
+## 🔍 코드 리뷰 체크리스트
+
+- [ ] STL 스타일 API 준수 ([coding-style.mdc](mdc:.cursor/rules/coding-style.mdc) 참조)
+- [ ] `constexpr`, `noexcept`, `[[nodiscard]]` 적절히 사용
+- [ ] C++20 Concepts로 타입 안전성 보장
+- [ ] 단위 테스트 작성 및 통과
+- [ ] 예제 코드로 사용법 명확히 제시
+- [ ] 메모리 누수 없음 (RAII 원칙 준수)
+- [ ] UTF-8 인코딩 문제 없음 (Windows 호환성)
+- [ ] 다국어 텍스트 정상 처리

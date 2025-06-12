@@ -1,0 +1,110 @@
+---
+description: 빌드 관련 문제 해결책
+globs:
+alwaysApply: false
+---
+# Rune Caster - 빌드 시스템 가이드
+
+## 🚀 빠른 빌드 (성공적으로 작동)
+
+현재 프로젝트는 **완전히 빌드 가능한 상태**입니다:
+
+```bash
+mkdir build && cd build
+cmake ..
+cmake --build . --config Release
+```
+
+## ✅ 현재 빌드 상태
+
+[BUILD_STATUS.md](mdc:BUILD_STATUS.md)를 확인하면:
+- ✅ rune_caster.lib (96KB) 빌드 성공
+- ✅ basic_usage.exe, sequence_usage.exe 실행 파일 생성
+- ✅ fmt 10.2.1, spdlog 1.12.0 자동 다운로드 및 빌드
+
+## 🔧 핵심 빌드 설정
+
+### 메인 CMake 설정
+[CMakeLists.txt](mdc:CMakeLists.txt)에서 중요한 설정들:
+
+```cmake
+# C++20 표준 및 UTF-8 인코딩 (Windows 문제 해결)
+set(CMAKE_CXX_STANDARD 20)
+target_compile_options(rune_caster PRIVATE /utf-8 /wd4819)  # MSVC
+
+# FetchContent 자동 의존성 관리
+fetch_dependency(fmt "https://github.com/fmtlib/fmt.git" "10.2.1")
+fetch_dependency(spdlog "https://github.com/gabime/spdlog.git" "v1.12.0")
+```
+
+### 의존성 관리 전략
+[docs/DEPENDENCIES.md](mdc:docs/DEPENDENCIES.md)에서 상세 정보:
+- **uni-algo** (권장): 경량 Unicode 라이브러리
+- **시스템 ICU**: 고급 Unicode 기능
+- **FetchContent ICU**: 실험적 (Windows에서 복잡함)
+
+## 🎯 빌드 옵션
+
+### 기본 옵션
+```cmake
+option(RUNE_CASTER_ENABLE_TESTS "Enable testing" ON)
+option(RUNE_CASTER_ENABLE_EXAMPLES "Enable examples" ON)
+option(RUNE_CASTER_USE_UNI_ALGO "Use uni-algo Unicode library" ON)
+```
+
+### 고급 빌드
+```bash
+# 의존성 최소화
+cmake .. -DRUNE_CASTER_ENABLE_FMT=OFF -DRUNE_CASTER_ENABLE_SPDLOG=OFF
+
+# 시스템 ICU 사용
+cmake .. -DRUNE_CASTER_USE_UNI_ALGO=OFF -DRUNE_CASTER_USE_SYSTEM_ICU=ON
+
+# 병렬 빌드 (권장)
+cmake --build . --config Release --parallel 4
+```
+
+## 🐛 문제 해결
+
+### UTF-8 인코딩 문제 (해결됨)
+- **문제**: C4819 경고, C2059 문법 오류
+- **해결**: `/utf-8 /wd4819` 컴파일러 옵션 추가
+- **위치**: [CMakeLists.txt](mdc:CMakeLists.txt) line 141-144
+
+### ICU 의존성 문제 (해결됨)
+- **문제**: ICU 라이브러리 미설치
+- **해결**: uni-algo 기본 사용, 시스템 ICU는 선택적
+- **설정**: [CMakeLists.txt](mdc:CMakeLists.txt) line 89-113
+
+### FetchContent 캐시 문제
+```bash
+# 캐시 정리 후 재빌드
+rm -rf build/_deps
+cmake --build . --target clean
+cmake --build .
+```
+
+## 📊 빌드 결과물
+
+성공적인 빌드 후:
+```
+build/
+├── Release/rune_caster.lib          # 메인 라이브러리
+├── examples/Release/
+│   ├── basic_usage.exe              # 기본 예제
+│   ├── sequence_usage.exe           # 시퀀스 예제
+│   └── unicode_test.exe             # Unicode 테스트
+└── _deps/                           # 자동 다운로드 의존성
+```
+
+## 🎮 테스트 실행
+
+```bash
+# 예제 실행 (빌드 후)
+.\examples\Release\basic_usage.exe
+.\examples\Release\sequence_usage.exe
+.\examples\Release\unicode_test.exe
+
+# 단위 테스트 (개발 중)
+ctest --parallel --output-on-failure
+```

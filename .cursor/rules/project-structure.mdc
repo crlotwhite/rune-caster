@@ -1,0 +1,59 @@
+---
+description: 새로운 기능 추가 시 참조해야 할 파일들
+globs:
+alwaysApply: false
+---
+# Rune Caster - 프로젝트 구조 가이드
+
+## 🏗️ 핵심 아키텍처
+
+Rune Caster는 **STL에서 영감받은 3단계 아키텍처**를 사용합니다:
+
+- **Rune**: 컨테이너 (STL Container 역할)
+- **Spell**: 알고리즘 (STL Algorithm 역할)
+- **Caster**: 실행 엔진 (STL Iterator 역할)
+
+## 📁 디렉토리 구조
+
+### 헤더 파일 (include/)
+- [rune.hpp](mdc:include/rune_caster/rune.hpp) - 기본 Rune 클래스
+- [rune_sequence.hpp](mdc:include/rune_caster/rune_sequence.hpp) - RuneSequence 컨테이너
+- [language.hpp](mdc:include/rune_caster/language.hpp) - 언어 코드 정의
+- [unicode.hpp](mdc:include/rune_caster/unicode.hpp) - Unicode 유틸리티
+- [concepts.hpp](mdc:include/rune_caster/concepts.hpp) - C++20 Concepts
+
+### 구현 파일 (src/)
+- [rune.cpp](mdc:src/rune/rune.cpp) - Rune 클래스 구현
+- [rune_sequence.cpp](mdc:src/rune/rune_sequence.cpp) - RuneSequence 구현
+
+### 예제 코드 (examples/)
+- [basic_usage.cpp](mdc:examples/basic_usage.cpp) - 기본 사용 예제
+- [sequence_usage.cpp](mdc:examples/sequence_usage.cpp) - 시퀀스 사용 예제
+- [unicode_test.cpp](mdc:examples/unicode_test.cpp) - Unicode 디버깅 예제
+
+### 테스트 (tests/)
+- [test_rune.cpp](mdc:tests/unit/test_rune.cpp) - Rune 클래스 단위 테스트
+
+### 문서 (docs/)
+- [README.md](mdc:docs/README.md) - 문서 네비게이션
+- [PRD.md](mdc:docs/PRD.md) - 프로젝트 요구사항
+- [api-design.md](mdc:docs/api-design.md) - API 설계 명세
+- [technical-architecture.md](mdc:docs/technical-architecture.md) - 기술 아키텍처
+- [development-guide.md](mdc:docs/development-guide.md) - 개발 가이드
+
+## 🎯 빠른 네비게이션
+
+### 새로운 기능 추가 시:
+1. 헤더 파일 먼저: [include/rune_caster/](mdc:include/rune_caster)
+2. 구현 파일: [src/](mdc:src)
+3. 예제 추가: [examples/](mdc:examples)
+4. 테스트 작성: [tests/unit/](mdc:tests/unit)
+
+### 빌드 관련:
+- [CMakeLists.txt](mdc:CMakeLists.txt) - 메인 빌드 설정
+- [BUILD_STATUS.md](mdc:BUILD_STATUS.md) - 현재 빌드 상태
+- [QUICK_START.md](mdc:QUICK_START.md) - 5분 빠른 시작
+
+### 문제 해결:
+- [BUILD_STATUS.md](mdc:BUILD_STATUS.md) - 해결된 문제들
+- [docs/DEPENDENCIES.md](mdc:docs/DEPENDENCIES.md) - 의존성 관리

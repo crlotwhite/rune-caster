@@ -1,0 +1,209 @@
+---
+description: troubleshooting
+globs:
+alwaysApply: false
+---
+# Rune Caster - 문제 해결 가이드
+
+## ✅ 현재 프로젝트 상태
+
+**프로젝트는 현재 완전히 빌드 가능한 상태입니다!**
+[BUILD_STATUS.md](mdc:BUILD_STATUS.md)에서 해결된 문제들을 확인하세요.
+
+## 🚀 빠른 문제 해결
+
+### 빌드가 안 될 때
+```bash
+# 1. 이전 빌드 정리
+rm -rf build
+mkdir build && cd build
+
+# 2. 새로 빌드
+cmake ..
+cmake --build . --config Release --parallel 4
+
+# 3. 성공 확인
+ls Release/  # rune_caster.lib 확인
+```
+
+## 🔧 해결된 주요 문제들
+
+### ✅ UTF-8 인코딩 문제 (해결됨)
+**증상**: C4819 경고, C2059 구문 오류 (한국어 주석/문자열)
+**해결책**: [CMakeLists.txt](mdc:CMakeLists.txt)에서 `/utf-8 /wd4819` 옵션 적용
+```cmake
+target_compile_options(rune_caster PRIVATE
+    /utf-8      # UTF-8 인코딩 강제
+    /wd4819     # C4819 경고 억제
+)
+```
+
+### ✅ ICU 의존성 문제 (해결됨)
+**증상**: ICU 라이브러리를 찾을 수 없음
+**해결책**: uni-algo 경량 라이브러리 기본 사용
+```cmake
+# 현재 설정
+option(RUNE_CASTER_USE_UNI_ALGO "Use uni-algo Unicode library" ON)
+```
+
+**대안**:
+- 시스템 ICU 설치: `cmake .. -DRUNE_CASTER_USE_UNI_ALGO=OFF`
+- FetchContent ICU: `cmake .. -DRUNE_CASTER_USE_FETCHCONTENT_ICU=ON`
+
+### ✅ FetchContent 의존성 (해결됨)
+**현재 자동 다운로드되는 라이브러리**:
+- fmt 10.2.1 (포맷팅)
+- spdlog 1.12.0 (로깅)
+- uni-algo 1.2.0 (Unicode 처리)
+
+## 🐛 런타임 문제 해결
+
+### Unicode 텍스트 출력 문제
+**증상**: 콘솔에서 한글/일본어가 `?`로 표시
+**원인**: Windows 콘솔 표시 문제 (Unicode 처리는 정상)
+
+**해결 방법**:
+1. **Unicode 디버깅 도구** 사용: [unicode_test.cpp](mdc:examples/unicode_test.cpp)
+   ```bash
+   .\examples\Release\unicode_test.exe
+   ```
+
+2. **UTF-8 바이트 확인**:
+   ```
+   1. Hiragana 'あ' analysis:
+     UTF-8 bytes: 0xE3 0x81 0x82  # ← 정상 처리됨
+     Expected: 0xE3 0x81 0x82      # ← 예상값과 일치
+   ```
+
+3. **콘솔 설정**:
+   - Windows Terminal 사용
+   - VS Code 터미널 사용
+   - 콘솔 폰트를 'NSimSun'으로 변경
+
+### 메모리 관련 문제
+**현재 RAII 패턴 사용**으로 메모리 누수 방지:
+- [rune.hpp](mdc:include/rune_caster/rune.hpp): Rule of 5 준수
+- [rune_sequence.hpp](mdc:include/rune_caster/rune_sequence.hpp): std::vector 기반
+
+**디버깅 도구**:
+```bash
+# 메모리 디버깅 (Visual Studio)
+cmake .. -DCMAKE_BUILD_TYPE=Debug
+# 디버거에서 힙 검사 활성화
+```
+
+## 🔍 컴파일 오류 해결
+
+### 헤더 참조 오류
+**증상**: `Cannot open include file` 오류
+**해결**: include 경로 확인
+```cpp
+// 올바른 경로
+#include "rune_caster/rune.hpp"
+#include "rune_caster/rune_sequence.hpp"
+
+// 잘못된 경로
+#include "rune.hpp"  // ❌
+```
+
+### 링크 오류
+**증상**: `unresolved external symbol` 오류
+**해결**: [CMakeLists.txt](mdc:CMakeLists.txt)에서 소스 파일 확인
+```cmake
+target_sources(rune_caster
+    PRIVATE
+        src/rune/rune.cpp              # ✅ 포함됨
+        src/rune/rune_sequence.cpp     # ✅ 포함됨
+)
+```
+
+### C++20 지원 문제
+**증상**: `concepts` 또는 `char32_t` 관련 오류
+**해결**: 컴파일러 버전 확인
+```bash
+# Visual Studio 2022 (MSVC 19.29+) 권장
+# 또는 GCC 11+, Clang 13+
+```
+
+## 📊 성능 문제 해결
+
+### 빌드 시간 최적화
+```bash
+# 병렬 빌드 사용
+cmake --build . --parallel $(nproc)
+
+# 불필요한 기능 비활성화
+cmake .. -DRUNE_CASTER_ENABLE_TESTS=OFF \
+         -DRUNE_CASTER_ENABLE_EXAMPLES=OFF
+```
+
+### 런타임 성능 문제
+**프로파일링 도구**:
+```bash
+# Release 빌드로 벤치마크
+cmake .. -DCMAKE_BUILD_TYPE=Release -DRUNE_CASTER_ENABLE_BENCHMARKS=ON
+.\tests\benchmark\Release\benchmarks.exe
+```
+
+## 🎯 기능별 문제 해결
+
+### Rune 클래스 문제
+**테스트**: [basic_usage.cpp](mdc:examples/basic_usage.cpp) 실행
+```bash
+.\examples\Release\basic_usage.exe
+```
+
+**예상 출력**:
+```
+=== Rune Caster Basic Usage Example ===
+1. Creating basic Runes:
+  Latin 'A': codepoint=65, language=2
+  Hangul '가': codepoint=44032, language=1
+```
+
+### RuneSequence 문제
+**테스트**: [sequence_usage.cpp](mdc:examples/sequence_usage.cpp) 실행
+```bash
+.\examples\Release\sequence_usage.exe
+```
+
+## 🆘 고급 디버깅
+
+### CMake 캐시 문제
+```bash
+# CMake 캐시 완전 정리
+rm -rf build/CMakeCache.txt build/CMakeFiles/
+cmake ..
+```
+
+### FetchContent 다운로드 실패
+```bash
+# 네트워크 연결 확인 후 재시도
+rm -rf build/_deps/
+cmake --build . --target clean
+cmake --build .
+```
+
+### Visual Studio 프로젝트 생성 문제
+```bash
+# 특정 Generator 사용
+cmake .. -G "Visual Studio 17 2022" -A x64
+```
+
+## 📞 추가 도움
+
+### 참조 문서
+- [docs/DEPENDENCIES.md](mdc:docs/DEPENDENCIES.md) - 의존성 상세 정보
+- [docs/development-guide.md](mdc:docs/development-guide.md) - 개발 환경 설정
+- [BUILD_STATUS.md](mdc:BUILD_STATUS.md) - 현재 빌드 상태
+
+### 로그 수집
+```bash
+# 상세한 빌드 로그
+cmake --build . --config Release --verbose
+
+# CMake 설정 로그
+cmake .. --debug-output
+```
+
+**💡 팁**: 대부분의 문제는 이미 해결되었습니다. 빌드가 실패한다면 환경 설정을 먼저 확인하세요!
