@@ -179,9 +179,11 @@ endif()
 # 소스 파일들
 target_sources(rune_caster
     PRIVATE
-        src/rune/rune.cpp
-        src/rune/rune_sequence.cpp
-        src/spell/whitespace_normalizer.cpp
+            src/rune/rune.cpp
+    src/rune/rune_sequence.cpp
+    src/spell/whitespace_normalizer.cpp
+    src/spell/unicode_normalizer.cpp
+    src/spell/case_converter.cpp
 )
 
 # 헤더 포함 경로

@@ -116,10 +116,75 @@ TEST_F(SpellTest, CastSpellHelper) {
 }
 
 TEST_F(SpellTest, CastSpellHelperEmpty) {
+    std::string empty_text = "";
     spell::WhitespaceNormalizer normalizer;
-    
-    std::string input = "";
-    std::string result = spell::cast_spell(input, normalizer);
+    std::string result = spell::cast_spell(empty_text, normalizer);
     
     EXPECT_EQ(result, "");
+    EXPECT_EQ(result.length(), 0);
+}
+
+// === CaseConverter Tests ===
+
+TEST_F(SpellTest, CaseConverterLowercase) {
+    std::string input = "Hello WORLD";
+    auto sequence = RuneSequence::from_utf8(input);
+    
+    spell::CaseConverter lower_converter(spell::CaseConverter::CaseType::Lower);
+    auto result = lower_converter(sequence);
+    
+    EXPECT_EQ(result.to_utf8(), "hello world");
+    EXPECT_EQ(lower_converter.description(), "Lowercase Conversion");
+}
+
+TEST_F(SpellTest, CaseConverterUppercase) {
+    std::string input = "Hello world";
+    auto sequence = RuneSequence::from_utf8(input);
+    
+    spell::CaseConverter upper_converter(spell::CaseConverter::CaseType::Upper);
+    auto result = upper_converter(sequence);
+    
+    EXPECT_EQ(result.to_utf8(), "HELLO WORLD");
+    EXPECT_EQ(upper_converter.description(), "Uppercase Conversion");
+}
+
+TEST_F(SpellTest, CaseConverterTitlecase) {
+    std::string input = "hello world test";
+    auto sequence = RuneSequence::from_utf8(input);
+    
+    spell::CaseConverter title_converter(spell::CaseConverter::CaseType::Title);
+    auto result = title_converter(sequence);
+    
+    EXPECT_EQ(result.to_utf8(), "Hello World Test");
+    EXPECT_EQ(title_converter.description(), "Titlecase Conversion");
+}
+
+TEST_F(SpellTest, CaseConverterEmpty) {
+    auto empty_sequence = RuneSequence::from_utf8("");
+    
+    spell::CaseConverter converter(spell::CaseConverter::CaseType::Lower);
+    auto result = converter(empty_sequence);
+    
+    EXPECT_TRUE(result.empty());
+    EXPECT_EQ(result.to_utf8(), "");
+}
+
+TEST_F(SpellTest, CaseConverterMultilingual) {
+    std::string input = "Hello 안녕하세요 こんにちは";
+    auto sequence = RuneSequence::from_utf8(input);
+    
+    spell::CaseConverter lower_converter(spell::CaseConverter::CaseType::Lower);
+    auto result = lower_converter(sequence);
+    
+    // ASCII part should be lowercased, non-ASCII should remain unchanged
+    EXPECT_EQ(result.to_utf8(), "hello 안녕하세요 こんにちは");
+}
+
+TEST_F(SpellTest, CaseConverterWithHelper) {
+    std::string input = "MiXeD CaSe TeXt";
+    
+    spell::CaseConverter converter(spell::CaseConverter::CaseType::Lower);
+    std::string result = spell::cast_spell(input, converter);
+    
+    EXPECT_EQ(result, "mixed case text");
 } 
