@@ -181,6 +181,7 @@ target_sources(rune_caster
     PRIVATE
         src/rune/rune.cpp
         src/rune/rune_sequence.cpp
+        src/spell/whitespace_normalizer.cpp
 )
 
 # 헤더 포함 경로
@@ -254,9 +255,7 @@ endif()
 # 하위 디렉토리 추가
 if(RUNE_CASTER_ENABLE_TESTS)
     enable_testing()
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt)
-        add_subdirectory(tests)
-    endif()
+    add_subdirectory(tests/unit)
 endif()
 
 if(RUNE_CASTER_ENABLE_EXAMPLES)
