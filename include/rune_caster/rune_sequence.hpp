@@ -4,6 +4,7 @@
 #include <string>
 #include <string_view>
 #include <iterator>
+#include <ranges>
 
 #include "rune.hpp"
 #include "language.hpp"
@@ -11,14 +12,17 @@
 namespace rune_caster {
 
 /**
- * @brief A sequence container for Rune objects
+ * @brief A sequence container for Rune objects (API Design Document: RuneString)
  *
- * RuneSequence provides an STL-compatible container for storing and
+ * RuneString provides an STL-compatible container for storing and
  * manipulating sequences of Rune objects. It supports typical container
  * operations and provides factory methods for creating sequences from
  * text strings.
+ *
+ * This class follows the API Design Document specification for RuneString
+ * with full C++20 features support including ranges and concepts.
  */
-class RuneSequence {
+class RuneString {
 public:
     // === STL-compatible typedefs ===
     using value_type = Rune;
@@ -33,48 +37,76 @@ public:
     using reverse_iterator = std::vector<Rune>::reverse_iterator;
     using const_reverse_iterator = std::vector<Rune>::const_reverse_iterator;
 
+    // === Special constants ===
+    static constexpr size_type npos = std::string::npos;
+
 private:
     std::vector<Rune> runes_;
     language::Code primary_language_;
 
 public:
-    // === Constructors ===
+    // === Constructors (API Design Document enhanced) ===
 
     /**
      * @brief Default constructor
      */
-    RuneSequence() noexcept;
+    RuneString() noexcept = default;
 
     /**
      * @brief Construct with specific primary language
      * @param primary_lang The primary language of the sequence
      */
-    explicit RuneSequence(language::Code primary_lang) noexcept;
+    explicit RuneString(language::Code primary_lang) noexcept;
 
     /**
-     * @brief Copy constructor
+     * @brief Construct from UTF-8 string view
+     * @param utf8 UTF-8 encoded string
      */
-    RuneSequence(const RuneSequence&) = default;
+    explicit RuneString(std::string_view utf8);
 
     /**
-     * @brief Move constructor
+     * @brief Construct from UTF-16 string view
+     * @param utf16 UTF-16 encoded string
      */
-    RuneSequence(RuneSequence&&) noexcept = default;
+    explicit RuneString(std::u16string_view utf16);
 
     /**
-     * @brief Copy assignment
+     * @brief Construct from UTF-32 string view
+     * @param utf32 UTF-32 encoded string
      */
-    RuneSequence& operator=(const RuneSequence&) = default;
+    explicit RuneString(std::u32string_view utf32);
 
     /**
-     * @brief Move assignment
+     * @brief Construct from initializer list
+     * @param runes Initializer list of Rune objects
      */
-    RuneSequence& operator=(RuneSequence&&) noexcept = default;
+    RuneString(std::initializer_list<Rune> runes);
 
     /**
-     * @brief Destructor
+     * @brief Construct from iterator range (C++20 concepts)
+     * @tparam It Input iterator type
+     * @param first Iterator to the beginning
+     * @param last Iterator to the end
      */
-    ~RuneSequence() = default;
+    template<std::input_iterator It>
+    requires std::convertible_to<std::iter_value_t<It>, Rune>
+    RuneString(It first, It last);
+
+    /**
+     * @brief Construct from range (C++20 ranges)
+     * @tparam R Range type
+     * @param range Input range
+     */
+    template<std::ranges::input_range R>
+    requires std::convertible_to<std::ranges::range_value_t<R>, Rune>
+    explicit RuneString(R&& range);
+
+    // === Copy/Move semantics ===
+    RuneString(const RuneString&) = default;
+    RuneString(RuneString&&) noexcept = default;
+    RuneString& operator=(const RuneString&) = default;
+    RuneString& operator=(RuneString&&) noexcept = default;
+    ~RuneString() = default;
 
     // === Iterator access ===
 
@@ -98,6 +130,7 @@ public:
 
     [[nodiscard]] bool empty() const noexcept { return runes_.empty(); }
     [[nodiscard]] size_type size() const noexcept { return runes_.size(); }
+    [[nodiscard]] size_type length() const noexcept { return size(); }
     [[nodiscard]] size_type max_size() const noexcept { return runes_.max_size(); }
 
     void reserve(size_type new_cap) { runes_.reserve(new_cap); }
@@ -171,12 +204,12 @@ public:
         runes_.resize(count, value);
     }
 
-    void swap(RuneSequence& other) noexcept {
+    void swap(RuneString& other) noexcept {
         runes_.swap(other.runes_);
         std::swap(primary_language_, other.primary_language_);
     }
 
-    // === Sequence-specific operations ===
+    // === String operations (API Design Document requirement) ===
 
     /**
      * @brief Get the primary language of the sequence
@@ -201,69 +234,174 @@ public:
     [[nodiscard]] std::string to_utf8() const;
 
     /**
-     * @brief Append another sequence to this one
-     * @param other The sequence to append
+     * @brief Convert the sequence to UTF-16 string
+     * @return UTF-16 encoded string
      */
-    void append(const RuneSequence& other);
+    [[nodiscard]] std::u16string to_utf16() const;
 
     /**
-     * @brief Create a subsequence
-     * @param start Start position
-     * @param length Length of subsequence
-     * @return New RuneSequence containing the subsequence
+     * @brief Convert the sequence to UTF-32 string
+     * @return UTF-32 encoded string
      */
-    [[nodiscard]] RuneSequence substr(size_type start, size_type length = std::string::npos) const;
-
-    // === Factory methods ===
+    [[nodiscard]] std::u32string to_utf32() const;
 
     /**
-     * @brief Create sequence from UTF-8 string
+     * @brief Append another RuneString
+     * @param other The RuneString to append
+     */
+    RuneString& append(const RuneString& other);
+
+    /**
+     * @brief Append a single Rune
+     * @param rune The Rune to append
+     */
+    RuneString& append(const Rune& rune);
+
+    /**
+     * @brief Append a UTF-8 string
+     * @param utf8 The UTF-8 string to append
+     */
+    RuneString& append(std::string_view utf8);
+
+    /**
+     * @brief Create a substring
+     * @param start Starting position
+     * @param length Number of characters (default: all remaining)
+     * @return New RuneString containing the substring
+     */
+    [[nodiscard]] RuneString substr(size_type start, size_type length = npos) const;
+
+    // === Search operations (API Design Document requirement) ===
+
+    /**
+     * @brief Find first occurrence of a Rune
+     * @param rune The Rune to search for
+     * @param pos Starting position
+     * @return Position of first match, or npos if not found
+     */
+    [[nodiscard]] size_type find(const Rune& rune, size_type pos = 0) const noexcept;
+
+    /**
+     * @brief Find first occurrence of a RuneString
+     * @param str The RuneString to search for
+     * @param pos Starting position
+     * @return Position of first match, or npos if not found
+     */
+    [[nodiscard]] size_type find(const RuneString& str, size_type pos = 0) const noexcept;
+
+    /**
+     * @brief Check if the string contains a Rune
+     * @param rune The Rune to search for
+     * @return true if found, false otherwise
+     */
+    [[nodiscard]] bool contains(const Rune& rune) const noexcept;
+
+    /**
+     * @brief Check if the string contains a substring
+     * @param str The substring to search for
+     * @return true if found, false otherwise
+     */
+    [[nodiscard]] bool contains(const RuneString& str) const noexcept;
+
+    // === Factory methods (API Design Document requirement) ===
+
+    /**
+     * @brief Create a RuneString from UTF-8 text
      * @param utf8_text UTF-8 encoded text
-     * @return RuneSequence created from the text
+     * @return RuneString object
      */
-    static RuneSequence from_utf8(std::string_view utf8_text);
+    static RuneString from_utf8(std::string_view utf8_text);
 
     /**
-     * @brief Create sequence from UTF-8 string with language hint
+     * @brief Create a RuneString from UTF-8 text with language hint
      * @param utf8_text UTF-8 encoded text
-     * @param lang Language hint for the text
-     * @return RuneSequence created from the text
+     * @param lang Language hint for processing
+     * @return RuneString object
      */
-    static RuneSequence from_utf8(std::string_view utf8_text, language::Code lang);
+    static RuneString from_utf8(std::string_view utf8_text, language::Code lang);
 
-    // === Comparison operators ===
+    /**
+     * @brief Create a RuneString from UTF-16 text
+     * @param utf16_text UTF-16 encoded text
+     * @return RuneString object
+     */
+    static RuneString from_utf16(std::u16string_view utf16_text);
 
-    [[nodiscard]] bool operator==(const RuneSequence& other) const noexcept {
-        return runes_ == other.runes_;
+    /**
+     * @brief Create a RuneString from UTF-32 text
+     * @param utf32_text UTF-32 encoded text
+     * @return RuneString object
+     */
+    static RuneString from_utf32(std::u32string_view utf32_text);
+
+    // === Comparison operators (C++20 three-way comparison) ===
+
+    [[nodiscard]] auto operator<=>(const RuneString& other) const noexcept = default;
+    [[nodiscard]] bool operator==(const RuneString& other) const noexcept = default;
+
+    // === String concatenation operators ===
+
+    RuneString& operator+=(const RuneString& other) { return append(other); }
+    RuneString& operator+=(const Rune& rune) { return append(rune); }
+    RuneString& operator+=(std::string_view utf8) { return append(utf8); }
+
+    [[nodiscard]] friend RuneString operator+(const RuneString& lhs, const RuneString& rhs) {
+        RuneString result = lhs;
+        result += rhs;
+        return result;
     }
 
-    [[nodiscard]] bool operator!=(const RuneSequence& other) const noexcept {
-        return !(*this == other);
+    [[nodiscard]] friend RuneString operator+(const RuneString& lhs, const Rune& rhs) {
+        RuneString result = lhs;
+        result += rhs;
+        return result;
     }
 
-    [[nodiscard]] bool operator<(const RuneSequence& other) const noexcept {
-        return runes_ < other.runes_;
-    }
-
-    [[nodiscard]] bool operator<=(const RuneSequence& other) const noexcept {
-        return runes_ <= other.runes_;
-    }
-
-    [[nodiscard]] bool operator>(const RuneSequence& other) const noexcept {
-        return runes_ > other.runes_;
-    }
-
-    [[nodiscard]] bool operator>=(const RuneSequence& other) const noexcept {
-        return runes_ >= other.runes_;
+    [[nodiscard]] friend RuneString operator+(const Rune& lhs, const RuneString& rhs) {
+        RuneString result;
+        result.reserve(1 + rhs.size());
+        result += lhs;
+        result += rhs;
+        return result;
     }
 };
 
-// === Non-member functions ===
+// === Template implementations ===
+
+template<std::input_iterator It>
+requires std::convertible_to<std::iter_value_t<It>, Rune>
+RuneString::RuneString(It first, It last)
+    : runes_(first, last)
+    , primary_language_(language::Code::Unknown)
+{
+}
+
+template<std::ranges::input_range R>
+requires std::convertible_to<std::ranges::range_value_t<R>, Rune>
+RuneString::RuneString(R&& range)
+    : runes_(std::ranges::begin(range), std::ranges::end(range))
+    , primary_language_(language::Code::Unknown)
+{
+}
+
+// === Backward compatibility alias ===
 
 /**
- * @brief Swap two RuneSequences
+ * @brief Backward compatibility alias for RuneString
+ *
+ * This allows existing code using RuneSequence to continue working
+ * while transitioning to the new RuneString API.
  */
-inline void swap(RuneSequence& lhs, RuneSequence& rhs) noexcept {
+using RuneSequence = RuneString;
+
+// === Free functions ===
+
+/**
+ * @brief Swap two RuneString objects
+ * @param lhs First RuneString
+ * @param rhs Second RuneString
+ */
+inline void swap(RuneString& lhs, RuneString& rhs) noexcept {
     lhs.swap(rhs);
 }
 

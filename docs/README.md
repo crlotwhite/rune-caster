@@ -1,192 +1,192 @@
-# Rune Caster Documentation
+# Rune Caster 문서화
 
-Welcome to the Rune Caster documentation! This directory contains comprehensive documentation for the Modern C++ text preprocessing framework.
+이 디렉토리는 Rune Caster 프로젝트의 API 문서화와 관련된 파일들을 포함합니다.
 
-## 📚 Documentation Overview
+## 📚 문서 구조
 
-### Core Documents
-
-1. **[PRD.md](PRD.md)** - Product Requirements Document
-   - 프로젝트 비전과 목표
-   - 핵심 기능 및 요구사항
-   - 개발 일정 및 마일스톤
-
-2. **[technical-architecture.md](technical-architecture.md)** - Technical Architecture
-   - 시스템 설계 및 아키텍처
-   - C++20 Modules, Concepts, Ranges 활용
-   - 핵심 컴포넌트 설계
-
-3. **[api-design.md](api-design.md)** - API Design Specification
-   - 공개 API 인터페이스
-   - 사용 예제 및 패턴
-   - STL 스타일 설계 원칙
-
-4. **[development-guide.md](development-guide.md)** - Development Guide
-   - 개발 환경 설정
-   - 빌드 시스템 및 테스트 전략
-   - 코딩 표준 및 품질 관리
-
-## 🚀 Quick Start Guide
-
-### For Different User Types
-
-#### 🔬 **Researchers & Academics**
 ```
-Start with: PRD.md → api-design.md
-Focus on: Core concepts, usage patterns, extensibility
+docs/
+├── README.md           # 이 파일
+├── mainpage.md         # Doxygen 메인 페이지
+├── style.css           # 사용자 정의 CSS 스타일
+└── api/                # 생성된 API 문서 (빌드 후)
+    └── html/
+        └── index.html  # API 문서 메인 페이지
 ```
 
-#### 👨‍💻 **Application Developers**
-```
-Start with: api-design.md → development-guide.md
-Focus on: API reference, build instructions, examples
+## 🛠️ 문서 생성 방법
+
+### 1. 사전 요구사항
+
+- **Doxygen** 설치
+  ```bash
+  # Windows (Chocolatey)
+  choco install doxygen.install
+
+  # Ubuntu/Debian
+  sudo apt install doxygen
+
+  # macOS (Homebrew)
+  brew install doxygen
+  ```
+
+- **Graphviz** (선택사항, 다이어그램 생성용)
+  ```bash
+  # Windows (Chocolatey)
+  choco install graphviz
+
+  # Ubuntu/Debian
+  sudo apt install graphviz
+
+  # macOS (Homebrew)
+  brew install graphviz
+  ```
+
+### 2. CMake를 통한 문서 생성
+
+```bash
+# 프로젝트 루트에서
+cd build_test  # 또는 빌드 디렉토리
+
+# 문서 생성
+cmake --build . --target docs
+
+# 또는 직접 make 사용 (Linux/macOS)
+make docs
 ```
 
-#### 🏗️ **Framework Contributors**
-```
-Start with: technical-architecture.md → development-guide.md
-Focus on: System design, coding standards, contribution guidelines
-```
+### 3. 문서 보기
 
-#### 📊 **Project Managers**
-```
-Start with: PRD.md
-Focus on: Requirements, timeline, success metrics
-```
+생성된 문서는 다음 경로에서 확인할 수 있습니다:
+- `build_test/docs/html/index.html` (빌드 디렉토리 기준)
 
-## 🧩 Key Concepts
+브라우저에서 해당 파일을 열어서 API 문서를 확인하세요.
 
-### Architecture Trilogy: Rune-Spell-Caster
+## 📋 문서화 규칙
+
+### Doxygen 주석 스타일
 
 ```cpp
-// 🔤 Rune: Container for text data (like STL containers)
-RuneString text = "Hello 안녕하세요 こんにちは"_rs;
-
-// ✨ Spell: Algorithms for text processing (like STL algorithms)
-auto spell = spells::make_pipeline(
-    spells::clean_whitespace(),
-    spells::normalize_unicode(),
-    spells::detect_language()
-);
-
-// 🪄 Caster: Execution engine (like STL iterators)
-auto caster = casters::immediate(spell);
-auto result = caster.cast(text);
+/**
+ * @brief 간단한 설명을 여기에 작성합니다.
+ *
+ * 더 자세한 설명은 여기에 작성합니다.
+ * 여러 줄로 작성할 수 있습니다.
+ *
+ * @param param1 첫 번째 매개변수 설명
+ * @param param2 두 번째 매개변수 설명
+ * @return 반환값에 대한 설명
+ *
+ * @note 주의사항이나 참고사항
+ * @warning 경고사항
+ * @see 관련 함수나 클래스 참조
+ *
+ * @code
+ * // 사용 예제
+ * auto rune = Rune::from_utf8("A");
+ * @endcode
+ */
 ```
 
-### Modern C++20 Features
+### 한글 문서화 지원
 
-- **🎯 Concepts**: Type safety at compile time
-- **🔗 Ranges**: Functional programming patterns
-- **📦 Modules**: Clean dependency management
-- **⚡ Zero-cost abstractions**: Performance without overhead
+- **브리프 설명**: 한 문장으로 간결하게
+- **상세 설명**: 필요시 한글로 자세히 설명
+- **매개변수**: 타입과 용도를 명확히 설명
+- **예제 코드**: 실제 사용법을 보여주는 코드 포함
 
-## 📖 Document Navigation
+### 코드 예제 작성
 
-### By Development Phase
-
-| Phase | Primary Documents | Secondary Documents |
-|-------|------------------|-------------------|
-| **Planning** | PRD.md | - |
-| **Design** | technical-architecture.md, api-design.md | PRD.md |
-| **Implementation** | development-guide.md, api-design.md | technical-architecture.md |
-| **Testing** | development-guide.md | api-design.md |
-| **Deployment** | development-guide.md | PRD.md |
-
-### By Role
-
-| Role | Must Read | Should Read | Optional |
-|------|-----------|-------------|----------|
-| **Product Manager** | PRD.md | api-design.md | technical-architecture.md, development-guide.md |
-| **Architect** | technical-architecture.md, api-design.md | PRD.md, development-guide.md | - |
-| **Developer** | api-design.md, development-guide.md | technical-architecture.md | PRD.md |
-| **QA Engineer** | development-guide.md, api-design.md | technical-architecture.md, PRD.md | - |
-| **Technical Writer** | All documents | - | - |
-
-## 🎯 Framework Goals
-
-### Primary Objectives
-- **Intuitive API**: STL-inspired design for familiar usage patterns
-- **High Performance**: Zero-cost abstractions with compile-time optimizations
-- **Extensibility**: Easy addition of new languages and algorithms
-- **Accuracy**: Precise phonetic conversion using Posterior Phonetic Gram
-
-### Supported Languages (Initial)
-- 🇰🇷 **Korean**: Full Hangul support with phonetic conversion
-- 🇺🇸 **English**: Latin script processing and normalization
-- 🇯🇵 **Japanese**: Hiragana, Katakana, and Kanji support
-
-### Target Use Cases
-- 🔍 **NLP Research**: Multilingual text preprocessing pipelines
-- 🌐 **International Apps**: Localization and text processing
-- 🎮 **Game Development**: Multilingual content handling
-- 📚 **Linguistic Studies**: Cross-language phonetic analysis
-
-## 🛠️ Technical Highlights
-
-### C++20 Integration
 ```cpp
-// Concepts for type safety
-template<runes::RuneRange R>
-auto process_text(R&& range);
-
-// Ranges for functional style
-auto result = text
-    | views::clean_whitespace
-    | views::normalize
-    | views::detect_language;
-
-// Modules for clean imports
-import rune_caster;
-import rune_caster.phonetic;
+/**
+ * @brief Unicode 문자를 생성합니다.
+ *
+ * @code
+ * // 다양한 방법으로 Rune 생성
+ * auto korean = U'가'_rune;
+ * auto english = Rune::from_utf8("A");
+ * auto japanese = Rune(U'あ');
+ *
+ * // 언어별 속성 확인
+ * if (korean.is_hangul()) {
+ *     std::cout << "한글 문자입니다." << std::endl;
+ * }
+ * @endcode
+ */
 ```
 
-### Performance Features
-- **SIMD Optimizations**: Vectorized text processing
-- **Memory Pools**: Efficient allocation strategies
-- **Parallel Processing**: Multi-threaded algorithms
-- **Cache-Friendly**: Data structure optimization
+## 🎨 스타일 커스터마이징
 
-## 📊 Success Metrics
+- `style.css` 파일을 수정하여 문서의 모양을 변경할 수 있습니다.
+- 한글 폰트 최적화 및 다크 테마 지원이 포함되어 있습니다.
+- 반응형 디자인으로 모바일에서도 잘 보입니다.
 
-### Performance Targets
-- ⚡ **Processing Speed**: 1MB text in < 1 second
-- 🧠 **Memory Efficiency**: < 10x overhead vs raw strings
-- 🔄 **Compilation Time**: < 5 seconds for typical usage
+## 📖 문서 섹션
 
-### Quality Targets
-- 🎯 **Accuracy**: > 95% phonetic conversion accuracy
-- 🔒 **Reliability**: Zero memory leaks, thread-safe
-- 📱 **Compatibility**: C++20 compliant compilers
+생성되는 API 문서는 다음 섹션들을 포함합니다:
 
-## 🤝 Contributing
+1. **메인 페이지**: 프로젝트 개요 및 빠른 시작 가이드
+2. **클래스 목록**: 모든 클래스와 구조체
+3. **네임스페이스**: 조직화된 네임스페이스별 내용
+4. **파일 목록**: 헤더 파일과 소스 파일
+5. **함수 목록**: 모든 공개 함수와 메서드
+6. **예제**: 실제 사용 예제들
 
-Please refer to [development-guide.md](development-guide.md) for:
-- Development environment setup
-- Coding standards and style guide
-- Testing procedures and benchmarks
-- Contribution workflow and guidelines
+## 🔧 고급 설정
 
-## 📋 Document Status
+### 추가 Doxygen 태그
 
-| Document | Status | Last Updated | Reviewer |
-|----------|--------|--------------|----------|
-| PRD.md | ✅ Complete | 2024-01 | Product Team |
-| technical-architecture.md | ✅ Complete | 2024-01 | Architecture Team |
-| api-design.md | ✅ Complete | 2024-01 | API Team |
-| development-guide.md | ✅ Complete | 2024-01 | Engineering Team |
+```cpp
+/**
+ * @addtogroup rune_system Rune 시스템
+ * @{
+ */
 
-## 🔄 Document Maintenance
+/**
+ * @brief Rune 클래스
+ * @ingroup rune_system
+ */
+class Rune {
+    // ...
+};
 
-This documentation is maintained alongside the codebase. When making changes:
+/** @} */ // rune_system 그룹 끝
+```
 
-1. Update relevant documentation first
-2. Ensure examples remain valid
-3. Update cross-references
-4. Maintain consistency across documents
+### 수식 지원
+
+```cpp
+/**
+ * @brief 텍스트 유사도를 계산합니다.
+ *
+ * 유사도는 다음 공식으로 계산됩니다:
+ *
+ * \f[
+ * similarity = \frac{|A \cap B|}{|A \cup B|}
+ * \f]
+ *
+ * 여기서 A와 B는 문자 집합입니다.
+ */
+```
+
+## 📝 기여 가이드
+
+문서화에 기여할 때는 다음 사항들을 확인해주세요:
+
+1. **완전성**: 모든 공개 API가 문서화되었는지 확인
+2. **정확성**: 설명과 실제 구현이 일치하는지 확인
+3. **예제**: 실제 동작하는 예제 코드 포함
+4. **언어**: 한글과 영어 혼용 시 일관성 유지
+5. **스타일**: 기존 문서화 스타일과 일관성 유지
+
+## 🚀 자동화
+
+향후 CI/CD 파이프라인에서 자동으로 문서를 생성하고 배포할 예정입니다:
+
+- GitHub Actions를 통한 자동 문서 생성
+- GitHub Pages 또는 별도 호스팅을 통한 온라인 문서 제공
+- Pull Request시 문서 미리보기 기능
 
 ---
 
-**Happy coding with Rune Caster! 🎉**
-
-For questions or suggestions about this documentation, please open an issue in the project repository.
+**도움이 필요하시면** GitHub Issues에 문의해주세요! 🙋‍♂️

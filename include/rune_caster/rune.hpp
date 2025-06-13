@@ -16,28 +16,31 @@ namespace rune_caster {
  * attributes such as language, category, and phonetic representation.
  * It serves as the fundamental building block for text processing in the
  * rune-caster framework.
+ *
+ * C++20 Enhanced: Supports constexpr operations, comprehensive language detection,
+ * and modern C++ features for optimal performance.
  */
 class Rune {
 public:
-        // === Constructors ===
+    // === Constructors (C++20 constexpr enhanced) ===
 
     /**
      * @brief Default constructor (creates null character)
      */
-    Rune() noexcept;
+    constexpr Rune() noexcept;
 
     /**
      * @brief Construct a Rune from a Unicode codepoint
      * @param codepoint The Unicode codepoint
      */
-    explicit Rune(char32_t codepoint) noexcept;
+    constexpr explicit Rune(char32_t codepoint) noexcept;
 
-        /**
+    /**
      * @brief Construct a Rune with explicit language information
      * @param codepoint The Unicode codepoint
      * @param language The language code
      */
-        Rune(char32_t codepoint, language::Code lang) noexcept;
+    constexpr Rune(char32_t codepoint, language::Code lang) noexcept;
 
     /**
      * @brief Construct a Rune with phonetic representation
@@ -48,37 +51,37 @@ public:
     Rune(char32_t codepoint, language::Code lang, std::string phoneme);
 
     // === Copy/Move semantics ===
-    Rune(const Rune&) = default;
-    Rune(Rune&&) noexcept = default;
-    Rune& operator=(const Rune&) = default;
-    Rune& operator=(Rune&&) noexcept = default;
+    constexpr Rune(const Rune&) = default;
+    constexpr Rune(Rune&&) noexcept = default;
+    constexpr Rune& operator=(const Rune&) = default;
+    constexpr Rune& operator=(Rune&&) noexcept = default;
     ~Rune() = default;
 
-    // === Accessors ===
+    // === Accessors (C++20 constexpr) ===
 
     /**
      * @brief Get the Unicode codepoint
      * @return The Unicode codepoint
      */
-    [[nodiscard]] char32_t codepoint() const noexcept { return codepoint_; }
+    [[nodiscard]] constexpr char32_t codepoint() const noexcept { return codepoint_; }
 
     /**
      * @brief Get the language code
      * @return The language code
      */
-    [[nodiscard]] language::Code language() const noexcept { return language_; }
+    [[nodiscard]] constexpr language::Code language() const noexcept { return language_; }
 
     /**
      * @brief Get the Unicode category
      * @return The Unicode category
      */
-    [[nodiscard]] unicode::Category category() const noexcept;
+    [[nodiscard]] constexpr unicode::Category category() const noexcept;
 
     /**
      * @brief Get the Unicode script
      * @return The Unicode script
      */
-    [[nodiscard]] unicode::Script script() const noexcept;
+    [[nodiscard]] constexpr unicode::Script script() const noexcept;
 
     /**
      * @brief Get the phonetic representation
@@ -92,7 +95,7 @@ public:
      * @brief Set the language code
      * @param language The new language code
      */
-    void set_language(language::Code lang) noexcept { language_ = lang; }
+    constexpr void set_language(language::Code lang) noexcept { language_ = lang; }
 
     /**
      * @brief Set the phonetic representation
@@ -100,43 +103,87 @@ public:
      */
     void set_phoneme(std::string phoneme) { phoneme_ = std::move(phoneme); }
 
-    // === Character classification ===
+    // === Enhanced Character classification (C++20 constexpr) ===
 
     /**
      * @brief Check if this rune represents a vowel
      * @return true if vowel, false otherwise
      */
-    [[nodiscard]] bool is_vowel() const noexcept;
+    [[nodiscard]] constexpr bool is_vowel() const noexcept;
 
     /**
      * @brief Check if this rune represents a consonant
      * @return true if consonant, false otherwise
      */
-    [[nodiscard]] bool is_consonant() const noexcept;
+    [[nodiscard]] constexpr bool is_consonant() const noexcept;
 
     /**
      * @brief Check if this rune is a letter
      * @return true if letter, false otherwise
      */
-    [[nodiscard]] bool is_letter() const noexcept;
+    [[nodiscard]] constexpr bool is_letter() const noexcept;
 
     /**
      * @brief Check if this rune is a digit
      * @return true if digit, false otherwise
      */
-    [[nodiscard]] bool is_digit() const noexcept;
+    [[nodiscard]] constexpr bool is_digit() const noexcept;
 
     /**
      * @brief Check if this rune is whitespace
      * @return true if whitespace, false otherwise
      */
-    [[nodiscard]] bool is_whitespace() const noexcept;
+    [[nodiscard]] constexpr bool is_whitespace() const noexcept;
 
     /**
      * @brief Check if this rune is punctuation
      * @return true if punctuation, false otherwise
      */
-    [[nodiscard]] bool is_punctuation() const noexcept;
+    [[nodiscard]] constexpr bool is_punctuation() const noexcept;
+
+    // === Language-specific properties (API Design Document requirement) ===
+
+    /**
+     * @brief Check if this is an ASCII character
+     * @return true if ASCII (0-127), false otherwise
+     */
+    [[nodiscard]] constexpr bool is_ascii() const noexcept;
+
+    /**
+     * @brief Check if this is a Latin script character
+     * @return true if Latin script, false otherwise
+     */
+    [[nodiscard]] constexpr bool is_latin() const noexcept;
+
+    /**
+     * @brief Check if this is a Hangul (Korean) character
+     * @return true if Hangul, false otherwise
+     */
+    [[nodiscard]] constexpr bool is_hangul() const noexcept;
+
+    /**
+     * @brief Check if this is a Hiragana character
+     * @return true if Hiragana, false otherwise
+     */
+    [[nodiscard]] constexpr bool is_hiragana() const noexcept;
+
+    /**
+     * @brief Check if this is a Katakana character
+     * @return true if Katakana, false otherwise
+     */
+    [[nodiscard]] constexpr bool is_katakana() const noexcept;
+
+    /**
+     * @brief Check if this is a Kanji character
+     * @return true if Kanji (CJK Unified Ideographs), false otherwise
+     */
+    [[nodiscard]] constexpr bool is_kanji() const noexcept;
+
+    /**
+     * @brief Check if this is an emoji character
+     * @return true if emoji, false otherwise
+     */
+    [[nodiscard]] constexpr bool is_emoji() const noexcept;
 
     // === Conversion ===
 
@@ -152,7 +199,13 @@ public:
      */
     [[nodiscard]] std::u16string to_utf16() const;
 
-    // === Factory methods ===
+    /**
+     * @brief Convert to UTF-32 string
+     * @return UTF-32 encoded string representation
+     */
+    [[nodiscard]] constexpr std::u32string to_utf32() const;
+
+    // === Factory methods (API Design Document requirement) ===
 
     /**
      * @brief Create a Rune from a UTF-8 character
@@ -171,21 +224,25 @@ public:
      */
     static Rune from_utf8(std::string_view utf8_char, language::Code lang);
 
-    // === Comparison operators ===
+    /**
+     * @brief Create a Rune from a UTF-16 character
+     * @param utf16_char UTF-16 encoded character
+     * @return Rune object
+     * @throws std::invalid_argument if invalid UTF-16 sequence
+     */
+    static Rune from_utf16(std::u16string_view utf16_char);
+
+    // === Comparison operators (C++20 three-way comparison) ===
+
+    /**
+     * @brief Three-way comparison operator (C++20)
+     */
+    [[nodiscard]] constexpr auto operator<=>(const Rune& other) const noexcept = default;
 
     /**
      * @brief Equality comparison
      */
-    [[nodiscard]] bool operator==(const Rune& other) const noexcept {
-        return codepoint_ == other.codepoint_;
-    }
-
-    /**
-     * @brief Less than comparison for ordering
-     */
-    [[nodiscard]] bool operator<(const Rune& other) const noexcept {
-        return codepoint_ < other.codepoint_;
-    }
+    [[nodiscard]] constexpr bool operator==(const Rune& other) const noexcept = default;
 
 private:
     char32_t codepoint_;        ///< Unicode codepoint
@@ -193,11 +250,24 @@ private:
     std::string phoneme_;       ///< Phonetic representation
 
     /**
-     * @brief Auto-detect language from codepoint
+     * @brief Auto-detect language from codepoint (constexpr)
      * @param cp Unicode codepoint
      * @return Detected language code
      */
-    static language::Code detect_language(char32_t cp) noexcept;
+    static constexpr language::Code detect_language(char32_t cp) noexcept;
 };
+
+// === User-defined literals (API Design Document requirement) ===
+
+/**
+ * @brief User-defined literal for creating Rune from Unicode codepoint
+ * @param cp Unicode codepoint
+ * @return Rune object
+ *
+ * Usage: auto rune = U'가'_rune;
+ */
+constexpr Rune operator""_rune(char32_t cp) noexcept {
+    return Rune(cp);
+}
 
 } // namespace rune_caster

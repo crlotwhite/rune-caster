@@ -19,6 +19,7 @@ option(RUNE_CASTER_ENABLE_TESTS "Enable testing" ON)
 option(RUNE_CASTER_ENABLE_BENCHMARKS "Enable benchmarking" OFF)
 option(RUNE_CASTER_ENABLE_EXAMPLES "Enable examples" ON)
 option(RUNE_CASTER_ENABLE_STATIC_ANALYSIS "Enable static analysis tools" OFF)
+option(RUNE_CASTER_ENABLE_DOCS "Enable documentation generation with Doxygen" ON)
 
 # 의존성 관리 옵션
 option(RUNE_CASTER_USE_SYSTEM_FMT "Use system-installed fmt library" OFF)
@@ -150,6 +151,11 @@ if(RUNE_CASTER_ENABLE_BENCHMARKS)
     find_package(benchmark QUIET)  # 성능 측정
 endif()
 
+# Doxygen 의존성 (문서 생성)
+if(RUNE_CASTER_ENABLE_DOCS)
+    find_package(Doxygen COMPONENTS dot QUIET)
+endif()
+
 # 메인 라이브러리 생성
 add_library(rune_caster)
 
@@ -264,6 +270,79 @@ if(RUNE_CASTER_ENABLE_EXAMPLES)
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/examples/CMakeLists.txt)
         add_subdirectory(examples)
     endif()
+endif()
+
+# Doxygen 문서 생성
+if(RUNE_CASTER_ENABLE_DOCS AND DOXYGEN_FOUND)
+    message(STATUS "Doxygen found. Documentation will be available.")
+
+    # Doxygen 변수 설정
+    set(DOXYGEN_PROJECT_NAME "Rune Caster")
+    set(DOXYGEN_PROJECT_NUMBER ${PROJECT_VERSION})
+    set(DOXYGEN_PROJECT_BRIEF "Modern C++ Text Processing Framework")
+    set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs)
+    set(DOXYGEN_USE_MDFILE_AS_MAINPAGE docs/mainpage.md)
+
+    # 추가 Doxygen 설정
+    set(DOXYGEN_GENERATE_HTML YES)
+    set(DOXYGEN_GENERATE_LATEX NO)
+    set(DOXYGEN_EXTRACT_ALL YES)
+    set(DOXYGEN_EXTRACT_PRIVATE NO)
+    set(DOXYGEN_SHOW_INCLUDE_FILES YES)
+    set(DOXYGEN_ENABLE_PREPROCESSING YES)
+    set(DOXYGEN_MACRO_EXPANSION YES)
+    set(DOXYGEN_EXPAND_ONLY_PREDEF NO)
+    set(DOXYGEN_SKIP_FUNCTION_MACROS YES)
+    set(DOXYGEN_SOURCE_BROWSER YES)
+    set(DOXYGEN_INLINE_SOURCES NO)
+    set(DOXYGEN_GENERATE_TREEVIEW YES)
+    set(DOXYGEN_HAVE_DOT ${DOXYGEN_DOT_FOUND})
+
+    # 입력 파일 설정
+    set(DOXYGEN_INPUT
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
+        "${CMAKE_CURRENT_SOURCE_DIR}/docs/mainpage.md"
+        "${CMAKE_CURRENT_SOURCE_DIR}/README.md"
+    )
+
+    set(DOXYGEN_EXCLUDE_PATTERNS
+        "*/build/*"
+        "*/build_*/*"
+        "*/.git/*"
+        "*/cmake/*"
+    )
+
+    set(DOXYGEN_FILE_PATTERNS
+        "*.hpp"
+        "*.h"
+        "*.cpp"
+        "*.cc"
+        "*.md"
+    )
+
+    set(DOXYGEN_EXAMPLE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/examples")
+    set(DOXYGEN_RECURSIVE YES)
+
+    # 문서 타겟 생성
+    doxygen_add_docs(docs
+        ${DOXYGEN_INPUT}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Generating API documentation with Doxygen"
+    )
+
+    # 별칭 타겟
+    add_custom_target(documentation DEPENDS docs)
+
+    message(STATUS "Documentation target 'docs' created.")
+    message(STATUS "Run 'cmake --build . --target docs' to generate documentation.")
+    message(STATUS "Documentation will be in: ${DOXYGEN_OUTPUT_DIRECTORY}/html/index.html")
+elseif(RUNE_CASTER_ENABLE_DOCS)
+    message(STATUS "Doxygen not found. Documentation generation disabled.")
+    message(STATUS "Install Doxygen to enable documentation generation:")
+    message(STATUS "  Windows: choco install doxygen.install")
+    message(STATUS "  Ubuntu: sudo apt install doxygen")
+    message(STATUS "  macOS: brew install doxygen")
 endif()
 
 # === 설치 설정 (개발 단계용 간소화) ===

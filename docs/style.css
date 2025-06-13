@@ -1,0 +1,268 @@
+/* Rune Caster Documentation 사용자 정의 스타일 */
+
+/* 전체 레이아웃 */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f8f9fa;
+}
+
+/* 헤더 스타일 */
+#top {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-bottom: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#projectname {
+    font-size: 2.2em;
+    font-weight: 300;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+#projectbrief {
+    color: rgba(255,255,255,0.9);
+    font-size: 1.1em;
+    margin-top: 0.5em;
+}
+
+/* 네비게이션 메뉴 */
+#main-nav {
+    background-color: #fff;
+    border-bottom: 1px solid #dee2e6;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.tablist a {
+    color: #495057;
+    border-radius: 4px;
+    margin: 0 2px;
+    transition: all 0.3s ease;
+}
+
+.tablist a:hover {
+    background-color: #e9ecef;
+    color: #007bff;
+}
+
+.tablist a.current {
+    background-color: #007bff;
+    color: white;
+}
+
+/* 메인 콘텐츠 영역 */
+#doc-content {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin: 20px;
+    padding: 30px;
+}
+
+/* 코드 블록 스타일 */
+.fragment {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 1rem;
+    margin: 1rem 0;
+    overflow-x: auto;
+}
+
+.line {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+/* 문법 하이라이팅 */
+.keyword { color: #d73a49; font-weight: bold; }
+.comment { color: #6a737d; font-style: italic; }
+.preprocessor { color: #e36209; }
+.stringliteral { color: #032f62; }
+.charliteral { color: #032f62; }
+
+/* 클래스/함수 문서 */
+.memtitle {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 6px 6px 0 0;
+    padding: 12px 15px;
+    font-weight: 600;
+    border-bottom: 2px solid #007bff;
+}
+
+.memproto {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0 0 6px 6px;
+    padding: 15px;
+}
+
+.memdoc {
+    background-color: #fff;
+    padding: 15px;
+    border-left: 4px solid #007bff;
+    margin-left: 10px;
+}
+
+/* 테이블 스타일 */
+table.memberdecls {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+}
+
+table.memberdecls td {
+    border: 1px solid #dee2e6;
+    padding: 8px 12px;
+}
+
+table.memberdecls th {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 10px 12px;
+    font-weight: 600;
+}
+
+/* 사이드바 */
+#nav-tree {
+    background-color: white;
+    border-right: 1px solid #dee2e6;
+    font-size: 0.9em;
+}
+
+#nav-tree .item {
+    padding: 2px 0;
+}
+
+#nav-tree .item a {
+    color: #495057;
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: block;
+    transition: all 0.2s ease;
+}
+
+#nav-tree .item a:hover {
+    background-color: #f8f9fa;
+    color: #007bff;
+}
+
+/* 검색 결과 */
+.searchresult {
+    border-bottom: 1px solid #dee2e6;
+    padding: 10px;
+}
+
+.searchresult:hover {
+    background-color: #f8f9fa;
+}
+
+/* 경고/알림 박스 */
+.warning, .attention, .note {
+    border-radius: 6px;
+    padding: 12px 15px;
+    margin: 15px 0;
+    border-left: 4px solid;
+}
+
+.warning {
+    background-color: #fff3cd;
+    border-left-color: #ffc107;
+    color: #856404;
+}
+
+.attention {
+    background-color: #f8d7da;
+    border-left-color: #dc3545;
+    color: #721c24;
+}
+
+.note {
+    background-color: #d1ecf1;
+    border-left-color: #17a2b8;
+    color: #0c5460;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    #doc-content {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    #projectname {
+        font-size: 1.8em;
+    }
+
+    .fragment {
+        font-size: 0.8em;
+    }
+}
+
+/* 다크 테마 지원 */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #1a1a1a;
+        color: #e9ecef;
+    }
+
+    #doc-content {
+        background-color: #2d3748;
+        color: #e2e8f0;
+    }
+
+    .fragment {
+        background-color: #1a202c;
+        border-color: #4a5568;
+    }
+
+    .keyword { color: #ff7979; }
+    .comment { color: #95a5a6; }
+    .stringliteral { color: #6c5ce7; }
+}
+
+/* 이모지 및 특수 문자 지원 */
+.emoji {
+    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    font-size: 1.2em;
+}
+
+/* 한글 폰트 최적화 */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+/* 링크 스타일 */
+a {
+    color: #007bff;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* 로딩 애니메이션 */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 123, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #007bff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
