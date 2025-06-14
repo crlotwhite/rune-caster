@@ -57,14 +57,17 @@ endfunction()
 
 # === FetchContent 의존성 ===
 
-# fmt 라이브러리 (포맷팅)
+# fmt 라이브러리 (포맷팅) - spdlog 호환성을 위해 안정적인 버전 사용
 if(RUNE_CASTER_ENABLE_FMT)
-    fetch_dependency(fmt "https://github.com/fmtlib/fmt.git" "10.2.1")
+    fetch_dependency(fmt "https://github.com/fmtlib/fmt.git" "9.1.0")
 endif()
 
-# spdlog 라이브러리 (로깅)
+# spdlog 라이브러리 (로깅) - fmt 9.x와 호환되는 버전
 if(RUNE_CASTER_ENABLE_SPDLOG)
-    fetch_dependency(spdlog "https://github.com/gabime/spdlog.git" "v1.12.0")
+    # spdlog가 external fmt를 사용하도록 설정
+    set(SPDLOG_FMT_EXTERNAL ON CACHE BOOL "Use external fmt library")
+    set(SPDLOG_FMT_EXTERNAL_HO OFF CACHE BOOL "Use external fmt header-only")
+    fetch_dependency(spdlog "https://github.com/gabime/spdlog.git" "v1.11.0")
 endif()
 
 # === 시스템 의존성 (복잡한 라이브러리들) ===
@@ -228,32 +231,34 @@ if(RUNE_CASTER_ENABLE_SPDLOG)
     endif()
 endif()
 
-# ICU 또는 uni-algo 라이브러리 연결
-if(RUNE_CASTER_ENABLE_ICU)
+# Unicode 라이브러리 연결 (우선순위: uni-algo > ICU > fallback)
+if(UNI_ALGO_FOUND)
+    # uni-algo 대안 (가장 우선)
+    target_link_libraries(rune_caster PUBLIC uni-algo::uni-algo)
+    target_compile_definitions(rune_caster PRIVATE RUNE_CASTER_HAS_UNI_ALGO)
+    message(STATUS "✅ uni-algo Unicode library linked successfully")
+elseif(RUNE_CASTER_ENABLE_ICU)
     if(ICU_FOUND AND TARGET icu)
         # FetchContent ICU (viaduck/icu-cmake)
         target_link_libraries(rune_caster PUBLIC icu)
         target_compile_definitions(rune_caster PRIVATE RUNE_CASTER_HAS_ICU)
-        message(STATUS "FetchContent ICU library linked successfully")
+        message(STATUS "✅ FetchContent ICU library linked successfully")
     elseif(ICU_FOUND)
         # 시스템 ICU
         target_link_libraries(rune_caster PUBLIC ICU::uc ICU::i18n ICU::data)
         target_compile_definitions(rune_caster PRIVATE RUNE_CASTER_HAS_ICU)
-        message(STATUS "System ICU library linked successfully")
+        message(STATUS "✅ System ICU library linked successfully")
     elseif(ICU_LIBRARIES)
         # pkg-config ICU
         target_link_libraries(rune_caster PUBLIC ${ICU_LIBRARIES})
         target_include_directories(rune_caster SYSTEM PUBLIC ${ICU_INCLUDE_DIRS})
         target_compile_definitions(rune_caster PRIVATE RUNE_CASTER_HAS_ICU)
-        message(STATUS "ICU library (pkg-config) linked successfully")
-    elseif(UNI_ALGO_FOUND)
-        # uni-algo 대안
-        target_link_libraries(rune_caster PUBLIC uni-algo::uni-algo)
-        target_compile_definitions(rune_caster PRIVATE RUNE_CASTER_HAS_UNI_ALGO)
-        message(STATUS "uni-algo Unicode library linked successfully")
+        message(STATUS "✅ ICU library (pkg-config) linked successfully")
     else()
-        message(STATUS "No Unicode library available, using basic fallback support")
+        message(STATUS "⚠️  No Unicode library available, using basic fallback support")
     endif()
+else()
+    message(STATUS "⚠️  Unicode support disabled, using basic fallback support")
 endif()
 
 # TBB 라이브러리 연결 (선택적)

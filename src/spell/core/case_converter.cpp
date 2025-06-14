@@ -1,7 +1,14 @@
 #include "rune_caster/spell.hpp"
 #include "rune_caster/unicode.hpp"
 #include <string>
-#include <uni_algo/case.h>
+
+// Unicode 케이스 변환 라이브러리 (조건부 포함)
+#ifdef RUNE_CASTER_HAS_UNI_ALGO
+    #include <uni_algo/case.h>
+#elif defined(RUNE_CASTER_HAS_ICU)
+    #include <unicode/uchar.h>
+    #include <unicode/unistr.h>
+#endif
 
 namespace rune_caster {
 namespace spell {
@@ -21,6 +28,8 @@ RuneSequence CaseConverter::operator()(const RuneSequence& input) const {
     std::string converted;
 
     try {
+#ifdef RUNE_CASTER_HAS_UNI_ALGO
+        // Use uni-algo for case conversion
         switch (case_type_) {
             case CaseType::Lower:
                 converted = una::cases::to_lowercase_utf8(utf8_text);
@@ -32,13 +41,17 @@ RuneSequence CaseConverter::operator()(const RuneSequence& input) const {
                 converted = una::cases::to_titlecase_utf8(utf8_text);
                 break;
             default:
-                // Fallback: return input unchanged
                 converted = utf8_text;
                 break;
         }
-    } catch (...) {
-        // Fallback implementation for basic ASCII cases
+#elif defined(RUNE_CASTER_HAS_ICU)
+        // Use ICU for case conversion (placeholder implementation)
+        // TODO: Implement ICU case conversion
+        converted = utf8_text;
+#else
+        // Use fallback ASCII-only implementation
         converted.reserve(utf8_text.size());
+        bool at_word_start = true;
 
         for (char ch : utf8_text) {
             switch (case_type_) {
@@ -57,8 +70,6 @@ RuneSequence CaseConverter::operator()(const RuneSequence& input) const {
                     }
                     break;
                 case CaseType::Title:
-                    // Simple title case: uppercase first letter of words
-                    static bool at_word_start = true;
                     if (ch == ' ' || ch == '\t' || ch == '\n') {
                         at_word_start = true;
                         converted.push_back(ch);
@@ -78,6 +89,10 @@ RuneSequence CaseConverter::operator()(const RuneSequence& input) const {
                     break;
             }
         }
+#endif
+    } catch (...) {
+        // Fallback implementation for all error cases
+        converted = utf8_text;
     }
 
     return RuneSequence::from_utf8(converted);

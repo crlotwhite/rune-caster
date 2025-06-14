@@ -75,15 +75,24 @@ jobs:
         
         cmake --version
         
+        # Check for system dependencies
+        echo "🔍 Checking system dependencies..."
+        pkg-config --version || echo "pkg-config not available"
+        pkg-config --exists icu-uc && echo "✅ ICU found via pkg-config" || echo "❌ ICU not found via pkg-config"
+        
     - name: 🔨 Configure CMake
       shell: bash
       run: |
+        echo "🔧 Configuring CMake with verbose output..."
         if [ "${{ runner.os }}" == "Windows" ]; then
           cmake -B build \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DRUNE_CASTER_ENABLE_TESTS=ON \
             -DRUNE_CASTER_ENABLE_EXAMPLES=ON \
-            -DRUNE_CASTER_ENABLE_DOCS=OFF
+            -DRUNE_CASTER_ENABLE_DOCS=OFF \
+            -DRUNE_CASTER_USE_UNI_ALGO=ON \
+            -DRUNE_CASTER_USE_SYSTEM_ICU=OFF \
+            --debug-output
         else
           cmake -B build \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
@@ -92,7 +101,10 @@ jobs:
             -DRUNE_CASTER_ENABLE_TESTS=ON \
             -DRUNE_CASTER_ENABLE_EXAMPLES=ON \
             -DRUNE_CASTER_ENABLE_DOCS=OFF \
-            -GNinja
+            -DRUNE_CASTER_USE_UNI_ALGO=ON \
+            -DRUNE_CASTER_USE_SYSTEM_ICU=OFF \
+            -GNinja \
+            --debug-output
         fi
         
     - name: 🏗️ Build
