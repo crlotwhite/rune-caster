@@ -62,11 +62,10 @@ if(RUNE_CASTER_ENABLE_FMT)
     fetch_dependency(fmt "https://github.com/fmtlib/fmt.git" "9.1.0")
 endif()
 
-# spdlog 라이브러리 (로깅) - fmt 9.x와 완전 호환되는 안정 버전
+# spdlog 라이브러리 (로깅) - 내장 fmt 사용으로 호환성 문제 해결
 if(RUNE_CASTER_ENABLE_SPDLOG)
-    # spdlog 설정: external fmt 사용, consteval 호환성을 위한 설정
-    set(SPDLOG_FMT_EXTERNAL ON CACHE BOOL "Use external fmt library")
-    set(SPDLOG_NO_EXCEPTIONS ON CACHE BOOL "Disable exceptions for better consteval compatibility")
+    # spdlog 설정: 내장 fmt 사용으로 consteval 호환성 문제 완전 해결
+    set(SPDLOG_FMT_EXTERNAL OFF CACHE BOOL "Use spdlog's bundled fmt library")
     set(SPDLOG_INSTALL OFF CACHE BOOL "Disable spdlog install")
     set(SPDLOG_BUILD_EXAMPLE OFF CACHE BOOL "Disable spdlog examples")
     set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "Disable spdlog tests")
@@ -233,10 +232,9 @@ if(RUNE_CASTER_ENABLE_SPDLOG)
         target_link_libraries(rune_caster PRIVATE spdlog::spdlog)
         target_compile_definitions(rune_caster PRIVATE 
             RUNE_CASTER_HAS_SPDLOG
-            SPDLOG_FMT_EXTERNAL=1  # External fmt 강제 사용
             SPDLOG_COMPILED_LIB     # 컴파일된 라이브러리 사용
         )
-        message(STATUS "✅ spdlog library linked successfully (with external fmt)")
+        message(STATUS "✅ spdlog library linked successfully (with bundled fmt)")
     else()
         message(STATUS "⚠️  spdlog not available, using basic logging")
     endif()
