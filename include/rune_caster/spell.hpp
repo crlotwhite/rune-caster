@@ -28,6 +28,7 @@
 #include "spell_filter.hpp"
 #include "spell_composition.hpp"
 #include "spell_factory.hpp"
+#include "spell_token.hpp"
 
 namespace rune_caster {
 namespace spell {
@@ -64,6 +65,8 @@ namespace spell {
 using core::WhitespaceNormalizer;
 using core::UnicodeNormalizer;
 using core::CaseConverter;
+using core::TrimEdges;
+using core::WhitespaceTokenizer;
 
 // Import language spells
 using language::LanguageDetector;

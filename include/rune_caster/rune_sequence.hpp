@@ -5,6 +5,7 @@
 #include <string_view>
 #include <iterator>
 #include <ranges>
+#include <span>
 
 #include "rune.hpp"
 #include "language.hpp"
@@ -153,6 +154,39 @@ public:
 
     [[nodiscard]] pointer data() noexcept { return runes_.data(); }
     [[nodiscard]] const_pointer data() const noexcept { return runes_.data(); }
+
+    // === Views ===
+
+    /**
+     * @brief Get a mutable span view of the underlying runes
+     */
+    [[nodiscard]] std::span<Rune> span() noexcept { return std::span<Rune>(runes_.data(), runes_.size()); }
+
+    /**
+     * @brief Get a read-only span view of the underlying runes
+     */
+    [[nodiscard]] std::span<const Rune> span() const noexcept { return std::span<const Rune>(runes_.data(), runes_.size()); }
+
+    /**
+     * @brief Get a sub-view (lazy slice) without copying
+     * @param start Starting index
+     * @param length Number of elements (default npos → until end)
+     */
+    [[nodiscard]] std::span<const Rune> slice_view(size_type start, size_type length = npos) const noexcept {
+        if (start >= size()) return {};
+        size_type actual = (length == npos || start + length > size()) ? size() - start : length;
+        return std::span<const Rune>(data() + start, actual);
+    }
+
+    [[nodiscard]] std::span<Rune> slice_view(size_type start, size_type length = npos) noexcept {
+        if (start >= size()) return {};
+        size_type actual = (length == npos || start + length > size()) ? size() - start : length;
+        return std::span<Rune>(data() + start, actual);
+    }
+
+    // === Implicit conversion to span ===
+    operator std::span<Rune>() noexcept { return span(); }
+    operator std::span<const Rune>() const noexcept { return span(); }
 
     // === Modifiers ===
 

@@ -191,6 +191,8 @@ target_sources(rune_caster
     src/spell/core/unicode_normalizer.cpp
     src/spell/core/case_converter.cpp
     src/spell/filter/punctuation_filter.cpp
+    src/spell/core/trim_edges.cpp
+    src/spell/core/whitespace_tokenizer.cpp
 )
 
 # 헤더 포함 경로

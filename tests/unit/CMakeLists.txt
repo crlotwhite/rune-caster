@@ -33,7 +33,16 @@ target_link_libraries(test_spell PRIVATE
     gtest_main
 )
 
+# TrimEdges 테스트
+add_executable(test_trim test_trim.cpp)
+target_link_libraries(test_trim PRIVATE
+    rune_caster
+    gtest
+    gtest_main
+)
+
 # 테스트 등록
 include(GoogleTest)
 gtest_discover_tests(test_rune)
 gtest_discover_tests(test_spell)
+gtest_discover_tests(test_trim)

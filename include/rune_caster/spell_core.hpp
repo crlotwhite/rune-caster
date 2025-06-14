@@ -97,6 +97,19 @@ public:
     CaseType case_type() const noexcept { return case_type_; }
 };
 
+/**
+ * @brief Trim leading and trailing whitespace
+ */
+class TrimEdges : public sequence_spell {
+public:
+    using input_type = RuneSequence;
+    using output_type = RuneSequence;
+
+    RuneSequence operator()(const RuneSequence& input) const override;
+    std::string description() const override { return "Trim leading/trailing whitespace"; }
+    std::string name() const override { return "TrimEdges"; }
+};
+
 } // namespace core
 } // namespace spell
 } // namespace rune_caster

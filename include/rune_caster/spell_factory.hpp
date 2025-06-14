@@ -4,6 +4,7 @@
 #include "spell_filter.hpp"
 #include "spell_composition.hpp"
 #include "unicode.hpp"
+#include "spell_token.hpp"
 
 namespace rune_caster {
 namespace spell {
@@ -168,6 +169,26 @@ inline auto display_formatter() {
         titlecase()
     );
 }
+
+/**
+ * @brief Text normalizer with optional punctuation removal
+ *
+ * whitespace -> unicode NFC -> (optional punctuation removal)
+ */
+template<bool RemovePunctuation = true>
+inline auto text_normalizer_with_punctuation() {
+    if constexpr (RemovePunctuation) {
+        return compose(compose(whitespace(), unicode_nfc()), punctuation(true));
+    } else {
+        return compose(whitespace(), unicode_nfc());
+    }
+}
+
+// === Trim factory ===
+inline auto trim() { return core::TrimEdges{}; }
+
+// === Tokenizer factory ===
+inline auto tokenizer_whitespace() { return core::WhitespaceTokenizer{}; }
 
 } // namespace factory
 
