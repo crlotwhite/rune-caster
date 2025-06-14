@@ -3,8 +3,13 @@
 #include <string>
 #include <iostream>
 
-// uni-algo 라이브러리의 정규화 기능
-#include <uni_algo/norm.h>
+// Unicode 정규화 라이브러리 (조건부 포함)
+#ifdef RUNE_CASTER_HAS_UNI_ALGO
+    #include <uni_algo/norm.h>
+#elif defined(RUNE_CASTER_HAS_ICU)
+    #include <unicode/normalizer2.h>
+    #include <unicode/unistr.h>
+#endif
 
 namespace rune_caster {
 namespace spell {
@@ -24,39 +29,43 @@ RuneSequence UnicodeNormalizer::operator()(const RuneSequence& input) const {
     std::string normalized;
 
     try {
-        // Use uni-algo for normalization if available
+#ifdef RUNE_CASTER_HAS_UNI_ALGO
+        // Use uni-algo for normalization
         switch (form_) {
             case unicode::NormalizationForm::NFC:
-                // NFC normalization (compose)
                 normalized = una::norm::to_nfc_utf8(utf8_text);
                 break;
             case unicode::NormalizationForm::NFD:
-                // NFD normalization (decompose)
                 normalized = una::norm::to_nfd_utf8(utf8_text);
                 break;
             case unicode::NormalizationForm::NFKC:
-                // NFKC normalization (compatibility compose)
                 normalized = una::norm::to_nfkc_utf8(utf8_text);
                 break;
             case unicode::NormalizationForm::NFKD:
-                // NFKD normalization (compatibility decompose)
                 normalized = una::norm::to_nfkd_utf8(utf8_text);
                 break;
             default:
-                // Fallback: return input unchanged
                 normalized = utf8_text;
                 break;
         }
-    } catch (...) {
-        // Fallback implementation for basic cases
+#elif defined(RUNE_CASTER_HAS_ICU)
+        // Use ICU for normalization (placeholder implementation)
+        // TODO: Implement ICU normalization
         normalized = utf8_text;
-
-        // Simple fallback: just ensure basic composition for common cases
+#else
+        // Fallback: no normalization library available
+        normalized = utf8_text;
+        
+        // Simple fallback for basic composition (placeholder)
         if (form_ == unicode::NormalizationForm::NFC ||
             form_ == unicode::NormalizationForm::NFKC) {
             // Basic composition examples for Korean Hangul
             // This is a very simplified fallback
         }
+#endif
+    } catch (...) {
+        // Fallback implementation for all error cases
+        normalized = utf8_text;
     }
 
     return RuneSequence::from_utf8(normalized);
