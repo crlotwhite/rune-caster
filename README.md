@@ -126,6 +126,7 @@ sudo cmake --install .
 ### 🌐 온라인 문서
 - **[API Documentation](https://yourusername.github.io/rune-caster)**: Doxygen으로 생성된 상세한 API 문서
 - **[빠른 시작 가이드](QUICK_START.md)**: 프로젝트 시작을 위한 단계별 가이드
+- **[보안 설정 가이드](docs/SECURITY_SETUP.md)**: GitHub Code Scanning 및 보안 스캔 설정
 
 ### 📖 로컬 문서 생성
 

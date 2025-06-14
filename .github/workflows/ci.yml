@@ -80,10 +80,17 @@ jobs:
         pkg-config --version || echo "pkg-config not available"
         pkg-config --exists icu-uc && echo "✅ ICU found via pkg-config" || echo "❌ ICU not found via pkg-config"
         
-    - name: 🔨 Configure CMake
+    - name: 🧹 Clean Build Directory
       shell: bash
       run: |
-        echo "🔧 Configuring CMake with verbose output..."
+        echo "🧹 Cleaning any existing build artifacts..."
+        rm -rf build/ || true
+        rm -rf _deps/ || true
+        
+    - name: 🔨 Configure CMake
+      shell: bash  
+      run: |
+        echo "🔧 Configuring CMake with optimized settings..."
         if [ "${{ runner.os }}" == "Windows" ]; then
           cmake -B build \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
@@ -92,7 +99,7 @@ jobs:
             -DRUNE_CASTER_ENABLE_DOCS=OFF \
             -DRUNE_CASTER_USE_UNI_ALGO=ON \
             -DRUNE_CASTER_USE_SYSTEM_ICU=OFF \
-            --debug-output
+            -DFETCHCONTENT_QUIET=OFF
         else
           cmake -B build \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
@@ -103,8 +110,8 @@ jobs:
             -DRUNE_CASTER_ENABLE_DOCS=OFF \
             -DRUNE_CASTER_USE_UNI_ALGO=ON \
             -DRUNE_CASTER_USE_SYSTEM_ICU=OFF \
-            -GNinja \
-            --debug-output
+            -DFETCHCONTENT_QUIET=OFF \
+            -GNinja
         fi
         
     - name: 🏗️ Build
@@ -211,11 +218,37 @@ jobs:
         trivyignores: '.trivyignore'
       continue-on-error: true
       
+    - name: 📊 Check Code Scanning availability
+      id: check-code-scanning
+      shell: bash
+      run: |
+        echo "🔍 Checking if Code Scanning is enabled..."
+        # Code Scanning이 활성화되어 있는지 확인
+        if curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+           -H "Accept: application/vnd.github.v3+json" \
+           "https://api.github.com/repos/${{ github.repository }}/code-scanning/alerts" \
+           | grep -q "Code scanning is not enabled"; then
+          echo "code_scanning_enabled=false" >> $GITHUB_OUTPUT
+          echo "⚠️  Code Scanning is not enabled for this repository"
+        else
+          echo "code_scanning_enabled=true" >> $GITHUB_OUTPUT
+          echo "✅ Code Scanning is available"
+        fi
+      continue-on-error: true
+      
     - name: 📋 Upload Trivy scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@v3
-      if: always()
+      if: always() && steps.check-code-scanning.outputs.code_scanning_enabled == 'true'
       with:
         sarif_file: 'trivy-results.sarif'
+      
+    - name: 📁 Upload Trivy results as artifact (fallback)
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: trivy-security-scan-results
+        path: trivy-results.sarif
+        retention-days: 30
 
   # 성능 벤치마크 (Release 빌드에서만)
   benchmark:

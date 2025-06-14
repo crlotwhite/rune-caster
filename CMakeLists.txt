@@ -57,17 +57,21 @@ endfunction()
 
 # === FetchContent 의존성 ===
 
-# fmt 라이브러리 (포맷팅) - spdlog 호환성을 위해 안정적인 버전 사용
+# fmt 라이브러리 (포맷팅) - C++20 consteval 호환성을 위한 안정 버전
 if(RUNE_CASTER_ENABLE_FMT)
-    fetch_dependency(fmt "https://github.com/fmtlib/fmt.git" "9.1.0")
+    fetch_dependency(fmt "https://github.com/fmtlib/fmt.git" "8.1.1")
 endif()
 
-# spdlog 라이브러리 (로깅) - fmt 9.x와 호환되는 버전
+# spdlog 라이브러리 (로깅) - fmt 8.x와 완전 호환되는 안정 버전
 if(RUNE_CASTER_ENABLE_SPDLOG)
-    # spdlog가 external fmt를 사용하도록 설정
+    # spdlog 설정: external fmt 사용, 컴파일 시간 최적화
     set(SPDLOG_FMT_EXTERNAL ON CACHE BOOL "Use external fmt library")
-    set(SPDLOG_FMT_EXTERNAL_HO OFF CACHE BOOL "Use external fmt header-only")
-    fetch_dependency(spdlog "https://github.com/gabime/spdlog.git" "v1.11.0")
+    set(SPDLOG_FMT_EXTERNAL_HO ON CACHE BOOL "Use external fmt header-only mode")
+    set(SPDLOG_INSTALL OFF CACHE BOOL "Disable spdlog install")
+    set(SPDLOG_BUILD_EXAMPLE OFF CACHE BOOL "Disable spdlog examples")
+    set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "Disable spdlog tests")
+    
+    fetch_dependency(spdlog "https://github.com/gabime/spdlog.git" "v1.10.0")
 endif()
 
 # === 시스템 의존성 (복잡한 라이브러리들) ===
@@ -166,12 +170,14 @@ add_library(rune_caster)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(rune_caster PRIVATE
         -Wall -Wextra -Wpedantic
+        -Wno-deprecated-literal-operator  # fmt/spdlog 호환성을 위한 경고 억제
         $<$<CONFIG:Release>:-O3 -DNDEBUG>
         $<$<CONFIG:Debug>:-g -O0 -DDEBUG>
     )
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     target_compile_options(rune_caster PRIVATE
         -Wall -Wextra -Wpedantic
+        -Wno-deprecated-literal-operator  # fmt/spdlog 호환성을 위한 경고 억제
         $<$<CONFIG:Release>:-O3 -DNDEBUG>
         $<$<CONFIG:Debug>:-g -O0 -DDEBUG>
     )
@@ -180,6 +186,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         /W4
         /utf-8  # UTF-8 인코딩 강제 (C4819 경고 해결)
         /wd4819 # C4819 경고 억제 (문자 인코딩 경고)
+        /wd4996 # deprecated 함수 경고 억제
         $<$<CONFIG:Release>:/O2 /DNDEBUG>
         $<$<CONFIG:Debug>:/Od /DDEBUG>
     )
@@ -214,9 +221,9 @@ if(RUNE_CASTER_ENABLE_FMT)
     if(TARGET fmt::fmt)
         target_link_libraries(rune_caster PRIVATE fmt::fmt)
         target_compile_definitions(rune_caster PRIVATE RUNE_CASTER_HAS_FMT)
-        message(STATUS "fmt library linked successfully")
+        message(STATUS "✅ fmt library linked successfully (v8.1.1 stable)")
     else()
-        message(STATUS "fmt not available, using fallback formatting")
+        message(STATUS "⚠️  fmt not available, using fallback formatting")
     endif()
 endif()
 
@@ -224,10 +231,14 @@ endif()
 if(RUNE_CASTER_ENABLE_SPDLOG)
     if(TARGET spdlog::spdlog)
         target_link_libraries(rune_caster PRIVATE spdlog::spdlog)
-        target_compile_definitions(rune_caster PRIVATE RUNE_CASTER_HAS_SPDLOG)
-        message(STATUS "spdlog library linked successfully")
+        target_compile_definitions(rune_caster PRIVATE 
+            RUNE_CASTER_HAS_SPDLOG
+            SPDLOG_FMT_EXTERNAL=1  # External fmt 강제 사용
+            SPDLOG_COMPILED_LIB     # 컴파일된 라이브러리 사용
+        )
+        message(STATUS "✅ spdlog library linked successfully (with external fmt)")
     else()
-        message(STATUS "spdlog not available, using basic logging")
+        message(STATUS "⚠️  spdlog not available, using basic logging")
     endif()
 endif()
 
