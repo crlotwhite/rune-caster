@@ -187,9 +187,10 @@ target_sources(rune_caster
     PRIVATE
             src/rune/rune.cpp
     src/rune/rune_sequence.cpp
-    src/spell/whitespace_normalizer.cpp
-    src/spell/unicode_normalizer.cpp
-    src/spell/case_converter.cpp
+    src/spell/core/whitespace_normalizer.cpp
+    src/spell/core/unicode_normalizer.cpp
+    src/spell/core/case_converter.cpp
+    src/spell/filter/punctuation_filter.cpp
 )
 
 # 헤더 포함 경로

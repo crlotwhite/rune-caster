@@ -3,11 +3,9 @@
 #include "spell_base.hpp"
 #include <string>
 #include <utility>
+#include "rune_sequence.hpp"
 
 namespace rune_caster {
-
-// Forward declaration
-class RuneSequence;
 
 namespace spell {
 namespace composition {

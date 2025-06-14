@@ -270,4 +270,24 @@ constexpr Rune operator""_rune(char32_t cp) noexcept {
     return Rune(cp);
 }
 
+// === Inline definitions for constructors (header-level) ===
+inline constexpr Rune::Rune() noexcept : codepoint_(U'\0'), language_(language::Code::Unknown), phoneme_() {}
+inline constexpr Rune::Rune(char32_t codepoint) noexcept : codepoint_(codepoint), language_(Rune::detect_language(codepoint)), phoneme_() {}
+inline constexpr Rune::Rune(char32_t codepoint, language::Code lang) noexcept : codepoint_(codepoint), language_(lang), phoneme_() {}
+
+// === Inline definitions for classification methods ===
+inline constexpr bool Rune::is_letter() const noexcept { return unicode::is_letter(codepoint_); }
+inline constexpr bool Rune::is_digit() const noexcept { return unicode::is_digit(codepoint_); }
+inline constexpr bool Rune::is_whitespace() const noexcept { return unicode::is_whitespace(codepoint_); }
+inline constexpr bool Rune::is_punctuation() const noexcept { return unicode::is_punctuation(codepoint_); }
+inline constexpr bool Rune::is_vowel() const noexcept {
+    char32_t c = codepoint_;
+    return (c == U'a' || c == U'e' || c == U'i' || c == U'o' || c == U'u' ||
+            c == U'A' || c == U'E' || c == U'I' || c == U'O' || c == U'U');
+}
+inline constexpr bool Rune::is_consonant() const noexcept {
+    return is_letter() && !is_vowel();
+}
+// inline definitions for previously constexpr functions already specialized in rune.cpp (will be identical)
+
 } // namespace rune_caster

@@ -7,27 +7,6 @@ namespace rune_caster {
 
 // === Constructors (C++20 constexpr enhanced) ===
 
-constexpr Rune::Rune() noexcept
-    : codepoint_(U'\0')
-    , language_(language::Code::Unknown)
-    , phoneme_()
-{
-}
-
-constexpr Rune::Rune(char32_t codepoint) noexcept
-    : codepoint_(codepoint)
-    , language_(detect_language(codepoint))
-    , phoneme_()
-{
-}
-
-constexpr Rune::Rune(char32_t codepoint, language::Code lang) noexcept
-    : codepoint_(codepoint)
-    , language_(lang)
-    , phoneme_()
-{
-}
-
 Rune::Rune(char32_t codepoint, language::Code lang, std::string phoneme)
     : codepoint_(codepoint)
     , language_(lang)
@@ -43,53 +22,6 @@ constexpr unicode::Category Rune::category() const noexcept {
 
 constexpr unicode::Script Rune::script() const noexcept {
     return unicode::get_script(codepoint_);
-}
-
-// === Enhanced Character classification (C++20 constexpr) ===
-
-constexpr bool Rune::is_vowel() const noexcept {
-    // Basic Latin vowels
-    switch (codepoint_) {
-        case U'a': case U'e': case U'i': case U'o': case U'u':
-        case U'A': case U'E': case U'I': case U'O': case U'U':
-            return true;
-
-        // Korean vowels (simplified)
-        case U'ㅏ': case U'ㅑ': case U'ㅓ': case U'ㅕ': case U'ㅗ':
-        case U'ㅛ': case U'ㅜ': case U'ㅠ': case U'ㅡ': case U'ㅣ':
-        case U'ㅐ': case U'ㅒ': case U'ㅔ': case U'ㅖ': case U'ㅘ':
-        case U'ㅙ': case U'ㅚ': case U'ㅝ': case U'ㅞ': case U'ㅟ':
-        case U'ㅢ':
-            return true;
-
-        // Japanese vowels (Hiragana)
-        case U'あ': case U'い': case U'う': case U'え': case U'お':
-        case U'ア': case U'イ': case U'ウ': case U'エ': case U'オ':
-            return true;
-
-        default:
-            return false;
-    }
-}
-
-constexpr bool Rune::is_consonant() const noexcept {
-    return is_letter() && !is_vowel();
-}
-
-constexpr bool Rune::is_letter() const noexcept {
-    return unicode::is_letter(codepoint_);
-}
-
-constexpr bool Rune::is_digit() const noexcept {
-    return unicode::is_digit(codepoint_);
-}
-
-constexpr bool Rune::is_whitespace() const noexcept {
-    return unicode::is_whitespace(codepoint_);
-}
-
-constexpr bool Rune::is_punctuation() const noexcept {
-    return unicode::is_punctuation(codepoint_);
 }
 
 // === Language-specific properties (API Design Document requirement) ===
@@ -296,61 +228,21 @@ Rune Rune::from_utf16(std::u16string_view utf16_char) {
 // === Language detection (constexpr) ===
 
 constexpr language::Code Rune::detect_language(char32_t cp) noexcept {
-    // ASCII range - assume English for letters
-    if (cp <= 0x7F) {
-        if ((cp >= U'A' && cp <= U'Z') || (cp >= U'a' && cp <= U'z')) {
+    using namespace unicode;
+    switch (get_script(cp)) {
+        case Script::Hangul:
+            return language::Code::Korean;
+        case Script::Hiragana:
+        case Script::Katakana:
+            return language::Code::Japanese;
+        case Script::Han:
+            return language::Code::Chinese; // rough heuristic
+        case Script::Latin:
             return language::Code::English;
-        }
-        return language::Code::Unknown;
+        default:
+            break;
     }
-
-    // Korean scripts
-    if ((cp >= 0x1100 && cp <= 0x11FF) ||  // Hangul Jamo
-        (cp >= 0x3130 && cp <= 0x318F) ||  // Hangul Compatibility Jamo
-        (cp >= 0xAC00 && cp <= 0xD7AF)) {  // Hangul Syllables
-        return language::Code::Korean;
-    }
-
-    // Japanese scripts
-    if ((cp >= 0x3040 && cp <= 0x309F) ||  // Hiragana
-        (cp >= 0x30A0 && cp <= 0x30FF) ||  // Katakana
-        (cp >= 0x31F0 && cp <= 0x31FF)) {  // Katakana Phonetic Extensions
-        return language::Code::Japanese;
-    }
-
-    // CJK Ideographs (could be Chinese, Japanese, or Korean)
-    if ((cp >= 0x4E00 && cp <= 0x9FFF) ||  // CJK Unified Ideographs
-        (cp >= 0x3400 && cp <= 0x4DBF)) {  // CJK Unified Ideographs Extension A
-        return language::Code::Chinese;  // Default to Chinese for CJK
-    }
-
-    // Latin Extended ranges - assume English/European
-    if ((cp >= 0x0080 && cp <= 0x024F) ||  // Latin-1 Supplement to Latin Extended-B
-        (cp >= 0x1E00 && cp <= 0x1EFF)) {  // Latin Extended Additional
-        return language::Code::English;
-    }
-
-    // Cyrillic
-    if (cp >= 0x0400 && cp <= 0x04FF) {
-        return language::Code::Russian;
-    }
-
-    // Arabic
-    if (cp >= 0x0600 && cp <= 0x06FF) {
-        return language::Code::Arabic;
-    }
-
-    // Hebrew
-    if (cp >= 0x0590 && cp <= 0x05FF) {
-        return language::Code::Hebrew;
-    }
-
-    // Thai
-    if (cp >= 0x0E00 && cp <= 0x0E7F) {
-        return language::Code::Thai;
-    }
-
-        return language::Code::Unknown;
+    return language::Code::Unknown;
 }
 
 } // namespace rune_caster

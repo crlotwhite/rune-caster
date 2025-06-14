@@ -1,6 +1,7 @@
 #pragma once
 
 #include "spell_core.hpp"
+#include "spell_filter.hpp"
 #include "spell_composition.hpp"
 #include "unicode.hpp"
 
@@ -99,6 +100,16 @@ inline auto unicode_nfkc() {
  */
 inline auto unicode_nfkd() {
     return core::UnicodeNormalizer{unicode::NormalizationForm::NFKD};
+}
+
+// === Punctuation filter factories ===
+
+/**
+ * @brief Create a punctuation filter
+ * @param remove If true (default) remove punctuation; if false keep only punctuation.
+ */
+inline auto punctuation(bool remove = true) {
+    return filter::PunctuationFilter{remove};
 }
 
 // === Combined operation factories ===

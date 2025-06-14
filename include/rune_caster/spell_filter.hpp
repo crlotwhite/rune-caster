@@ -3,11 +3,9 @@
 #include "spell_base.hpp"
 #include "unicode.hpp"
 #include <vector>
+#include "rune_sequence.hpp"
 
 namespace rune_caster {
-
-// Forward declaration
-class RuneSequence;
 
 namespace spell {
 namespace filter {
@@ -94,6 +92,39 @@ public:
     bool is_remove_mode() const noexcept { return remove_mode_; }
 };
 
+/**
+ * @brief Remove punctuation characters using C++20 concepts
+ *
+ * This spell removes (or keeps only) characters recognized as punctuation
+ * by the Unicode helper.
+ */
+class PunctuationFilter : public sequence_spell {
+private:
+    bool remove_mode_; // true = remove punctuation, false = keep only punctuation
+
+public:
+    using input_type = RuneSequence;
+    using output_type = RuneSequence;
+
+    explicit PunctuationFilter(bool remove = true) : remove_mode_(remove) {}
+
+    RuneSequence operator()(const RuneSequence& input) const override;
+
+    std::string description() const override {
+        return remove_mode_ ? "Remove punctuation" : "Keep only punctuation";
+    }
+
+    std::string name() const override { return "PunctuationFilter"; }
+
+    bool is_remove_mode() const noexcept { return remove_mode_; }
+};
+
 } // namespace filter
+
+// Import commonly used filters
+using filter::CategoryFilter;
+using filter::ScriptFilter;
+using filter::PunctuationFilter;
+
 } // namespace spell
 } // namespace rune_caster

@@ -5,6 +5,7 @@
 
 namespace rune_caster {
 namespace spell {
+namespace core {
 
 CaseConverter::CaseConverter(CaseType case_type)
     : case_type_(case_type) {
@@ -38,7 +39,7 @@ RuneSequence CaseConverter::operator()(const RuneSequence& input) const {
     } catch (...) {
         // Fallback implementation for basic ASCII cases
         converted.reserve(utf8_text.size());
-        
+
         for (char ch : utf8_text) {
             switch (case_type_) {
                 case CaseType::Lower:
@@ -95,5 +96,6 @@ std::string CaseConverter::description() const {
     }
 }
 
+} // namespace core
 } // namespace spell
-} // namespace rune_caster 
+} // namespace rune_caster

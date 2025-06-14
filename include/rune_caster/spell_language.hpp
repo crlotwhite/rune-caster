@@ -2,11 +2,11 @@
 
 #include "spell_base.hpp"
 #include "language.hpp"
+#include "rune_sequence.hpp"
 
 namespace rune_caster {
 
 // Forward declarations
-class RuneSequence;
 class Rune;
 
 namespace spell {

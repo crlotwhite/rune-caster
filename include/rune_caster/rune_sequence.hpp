@@ -406,3 +406,21 @@ inline void swap(RuneString& lhs, RuneString& rhs) noexcept {
 }
 
 } // namespace rune_caster
+
+// === STL interoperability helpers ===
+#include <functional>
+#include <ranges>
+
+namespace std::ranges {
+    template<>
+    inline constexpr bool enable_borrowed_range<rune_caster::RuneString> = true;
+}
+
+namespace std {
+    template<>
+    struct hash<rune_caster::RuneString> {
+        size_t operator()(const rune_caster::RuneString& rs) const noexcept {
+            return std::hash<std::string>{}(rs.to_utf8());
+        }
+    };
+}

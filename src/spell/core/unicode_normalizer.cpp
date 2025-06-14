@@ -8,6 +8,7 @@
 
 namespace rune_caster {
 namespace spell {
+namespace core {
 
 UnicodeNormalizer::UnicodeNormalizer(unicode::NormalizationForm form)
     : form_(form) {
@@ -49,9 +50,9 @@ RuneSequence UnicodeNormalizer::operator()(const RuneSequence& input) const {
     } catch (...) {
         // Fallback implementation for basic cases
         normalized = utf8_text;
-        
+
         // Simple fallback: just ensure basic composition for common cases
-        if (form_ == unicode::NormalizationForm::NFC || 
+        if (form_ == unicode::NormalizationForm::NFC ||
             form_ == unicode::NormalizationForm::NFKC) {
             // Basic composition examples for Korean Hangul
             // This is a very simplified fallback
@@ -76,5 +77,6 @@ std::string UnicodeNormalizer::description() const {
     }
 }
 
+} // namespace core
 } // namespace spell
-} // namespace rune_caster 
+} // namespace rune_caster

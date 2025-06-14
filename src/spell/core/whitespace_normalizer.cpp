@@ -5,6 +5,7 @@
 
 namespace rune_caster {
 namespace spell {
+namespace core {
 
 WhitespaceNormalizer::WhitespaceNormalizer(bool collapse_multiple, bool trim_edges)
     : collapse_multiple_(collapse_multiple), trim_edges_(trim_edges) {
@@ -20,7 +21,7 @@ RuneSequence WhitespaceNormalizer::operator()(const RuneSequence& input) const {
 
     // 1단계: 모든 공백을 표준 공백으로 정규화하고 collapse_multiple_ 적용
     bool prev_was_whitespace = false;
-    
+
     for (const auto& rune : input) {
         if (rune.is_whitespace()) {
             // 모든 공백 문자(탭, 개행 등)를 표준 공백으로 정규화
@@ -45,19 +46,19 @@ RuneSequence WhitespaceNormalizer::operator()(const RuneSequence& input) const {
     if (!trim_edges_) {
         return temp_result;
     }
-    
+
     // 앞쪽 공백 제거
     auto start_it = temp_result.begin();
     while (start_it != temp_result.end() && start_it->is_whitespace()) {
         ++start_it;
     }
-    
+
     // 뒤쪽 공백 제거
     auto end_it = temp_result.end();
     while (end_it != start_it && (end_it - 1)->is_whitespace()) {
         --end_it;
     }
-    
+
     // 결과 생성
     RuneSequence result;
     if (start_it < end_it) {
@@ -67,7 +68,7 @@ RuneSequence WhitespaceNormalizer::operator()(const RuneSequence& input) const {
             result.push_back(*it);
         }
     }
-    
+
     return result;
 }
 
@@ -84,5 +85,6 @@ std::string WhitespaceNormalizer::description() const {
     return desc;
 }
 
+} // namespace core
 } // namespace spell
-} // namespace rune_caster 
+} // namespace rune_caster
