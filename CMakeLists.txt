@@ -59,18 +59,18 @@ endfunction()
 
 # fmt 라이브러리 (포맷팅) - C++20 consteval 호환성을 위한 안정 버전
 if(RUNE_CASTER_ENABLE_FMT)
-    fetch_dependency(fmt "https://github.com/fmtlib/fmt.git" "9.1.0")
+    fetch_dependency(fmt "https://github.com/fmtlib/fmt.git" "10.2.1")
 endif()
 
-# spdlog 라이브러리 (로깅) - 내장 fmt 사용으로 호환성 문제 해결
+# spdlog 라이브러리 (로깅) - 외부 fmt 사용으로 constexpr/consteval 오류 해결
 if(RUNE_CASTER_ENABLE_SPDLOG)
-    # spdlog 설정: 내장 fmt 사용으로 consteval 호환성 문제 완전 해결
-    set(SPDLOG_FMT_EXTERNAL OFF CACHE BOOL "Use spdlog's bundled fmt library")
+    # spdlog 설정: 외부 fmt 사용 (fmt 10.x)으로 consteval 오류 해결
+    set(SPDLOG_FMT_EXTERNAL ON CACHE BOOL "Use external fmt library")
     set(SPDLOG_INSTALL OFF CACHE BOOL "Disable spdlog install")
     set(SPDLOG_BUILD_EXAMPLE OFF CACHE BOOL "Disable spdlog examples")
     set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "Disable spdlog tests")
     
-    fetch_dependency(spdlog "https://github.com/gabime/spdlog.git" "v1.11.0")
+    fetch_dependency(spdlog "https://github.com/gabime/spdlog.git" "v1.12.0")
 endif()
 
 # === 시스템 의존성 (복잡한 라이브러리들) ===
@@ -220,7 +220,7 @@ if(RUNE_CASTER_ENABLE_FMT)
     if(TARGET fmt::fmt)
         target_link_libraries(rune_caster PRIVATE fmt::fmt)
         target_compile_definitions(rune_caster PRIVATE RUNE_CASTER_HAS_FMT)
-        message(STATUS "✅ fmt library linked successfully (v8.1.1 stable)")
+        message(STATUS "✅ fmt library linked successfully (v10.2.1)")
     else()
         message(STATUS "⚠️  fmt not available, using fallback formatting")
     endif()
@@ -234,7 +234,7 @@ if(RUNE_CASTER_ENABLE_SPDLOG)
             RUNE_CASTER_HAS_SPDLOG
             SPDLOG_COMPILED_LIB     # 컴파일된 라이브러리 사용
         )
-        message(STATUS "✅ spdlog library linked successfully (with bundled fmt)")
+        message(STATUS "✅ spdlog library linked successfully (external fmt 10.x)")
     else()
         message(STATUS "⚠️  spdlog not available, using basic logging")
     endif()
