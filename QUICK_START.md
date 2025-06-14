@@ -165,3 +165,113 @@ cmake --build . --config Release --verbose
 ---
 
 **🎉 축하합니다!** 이제 현대적인 C++로 다국어 텍스트 처리를 시작할 수 있습니다!
+
+## Simple Spell Usage
+
+The Rune Caster library provides a simple, unified API for text processing. You only need to include one header:
+
+```cpp
+#include <rune_caster/spell.hpp>
+using namespace rune_caster;
+```
+
+## Basic Text Processing
+
+### Simple Operations
+```cpp
+std::string input = "  Hello, WORLD!  ";
+auto text = RuneSequence::from_utf8(input);
+
+// Convert to lowercase
+auto lower = text | spell::lowercase();
+// Result: "  hello, world!  "
+
+// Trim whitespace
+auto trimmed = text | spell::trim();
+// Result: "Hello, WORLD!"
+
+// Chain operations with pipe operator
+auto result = text | spell::lowercase() | spell::trim();
+// Result: "hello, world!"
+```
+
+### Using Caster for Complex Chains
+```cpp
+auto result = make_caster(text)
+    .cast(spell::normalize_whitespace())  // Collapse multiple spaces
+    .cast(spell::trim())                  // Remove leading/trailing spaces
+    .cast(spell::lowercase())             // Convert to lowercase
+    .cast(spell::remove_punctuation())    // Remove punctuation
+    .result();
+// Result: "hello world"
+```
+
+## Available Spells
+
+### Text Case
+- `spell::lowercase()` - Convert to lowercase
+- `spell::uppercase()` - Convert to uppercase
+- `spell::titlecase()` - Convert to title case
+
+### Whitespace
+- `spell::trim()` - Remove leading/trailing whitespace
+- `spell::normalize_whitespace()` - Collapse multiple spaces
+
+### Unicode
+- `spell::unicode_nfc()` - Apply NFC normalization
+- `spell::unicode_nfd()` - Apply NFD normalization
+- `spell::unicode_nfkc()` - Apply NFKC normalization
+- `spell::unicode_nfkd()` - Apply NFKD normalization
+
+### Filtering
+- `spell::remove_punctuation()` - Remove punctuation characters
+
+### Language
+- `spell::detect_language()` - Detect text language
+
+### Tokenization
+- `spell::tokenize()` - Split text by whitespace
+
+## Predefined Combinations
+
+### Standard Cleanup
+```cpp
+auto cleaned = text | spell::cleanup();
+// Equivalent to: normalize_whitespace + trim + lowercase
+```
+
+### Search Preprocessing
+```cpp
+auto preprocessed = text | spell::search_preprocess();
+// Equivalent to: unicode_nfc + normalize_whitespace + trim + lowercase + remove_punctuation
+```
+
+## Custom Spells
+
+Create your own spells using lambda functions:
+
+```cpp
+auto reverse_spell = spell::custom("Reverse", "Reverse text",
+    [](const RuneSequence& input) {
+        RuneSequence result;
+        for (auto it = input.rbegin(); it != input.rend(); ++it) {
+            result.push_back(*it);
+        }
+        return result;
+    });
+
+auto reversed = make_caster(RuneSequence::from_utf8("Hello"))
+    .cast(reverse_spell)
+    .result();
+// Result: "olleH"
+```
+
+## Building Your Project
+
+Add to your CMakeLists.txt:
+```cmake
+find_package(rune_caster REQUIRED)
+target_link_libraries(your_target rune_caster::rune_caster)
+```
+
+That's it! The spell system is designed to be simple and intuitive while providing powerful text processing capabilities.

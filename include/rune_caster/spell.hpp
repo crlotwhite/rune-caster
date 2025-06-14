@@ -2,138 +2,254 @@
 
 /**
  * @file spell.hpp
- * @brief Comprehensive spell system for text transformation
+ * @brief Simple and unified spell system for text transformation
  *
- * This is the main header file for the Rune Caster spell system.
- * It includes all spell-related functionality organized into logical modules:
+ * This is the ONLY header you need to include for spell functionality.
+ * All spells are available through simple factory functions in the
+ * rune_caster::spell namespace.
  *
- * - Core spells: Basic text normalization (whitespace, case, unicode)
- * - Language spells: Language detection and phonetic conversion
- * - Filter spells: Character category and script filtering
- * - Composition: Spell chaining and pipeline creation
- * - Factory functions: Convenient spell creation utilities
+ * Usage:
+ * @code
+ * #include <rune_caster/spell.hpp>
+ * using namespace rune_caster;
  *
- * @author Rune-Caster Development Team
- * @since 1.0.0
+ * // Simple usage with pipe operator
+ * auto result = text | spell::lowercase() | spell::trim();
+ *
+ * // Or with caster
+ * auto result = make_caster(text)
+ *     .cast(spell::lowercase())
+ *     .cast(spell::trim())
+ *     .result();
+ * @endcode
  */
 
-// Core dependencies
+// Internal headers (users don't need to know about these)
 #include "spell_base.hpp"
+#include "spell_extensible.hpp"
 #include "rune_sequence.hpp"
 #include "caster.hpp"
 
-// Core spell modules
+// Implementation headers
 #include "spell_core.hpp"
-#include "spell_language.hpp"
 #include "spell_filter.hpp"
-#include "spell_composition.hpp"
-#include "spell_factory.hpp"
+#include "spell_language.hpp"
 #include "spell_token.hpp"
 
 namespace rune_caster {
 namespace spell {
 
+// === Simple factory functions for common spells ===
+
 /**
- * @brief Main spell namespace containing all spell functionality
+ * @brief Convert text to lowercase
+ */
+inline auto lowercase() {
+    return core::CaseConverter{core::CaseConverter::CaseType::Lower};
+}
+
+/**
+ * @brief Convert text to uppercase
+ */
+inline auto uppercase() {
+    return core::CaseConverter{core::CaseConverter::CaseType::Upper};
+}
+
+/**
+ * @brief Convert text to title case
+ */
+inline auto titlecase() {
+    return core::CaseConverter{core::CaseConverter::CaseType::Title};
+}
+
+/**
+ * @brief Trim leading and trailing whitespace
+ */
+inline auto trim() {
+    return core::TrimEdges{};
+}
+
+/**
+ * @brief Normalize whitespace (collapse multiple spaces, optionally trim)
+ */
+inline auto normalize_whitespace(bool collapse_multiple = true, bool trim_edges = true) {
+    return core::WhitespaceNormalizer{collapse_multiple, trim_edges};
+}
+
+/**
+ * @brief Apply Unicode NFC normalization
+ */
+inline auto unicode_nfc() {
+    return core::UnicodeNormalizer{unicode::NormalizationForm::NFC};
+}
+
+/**
+ * @brief Apply Unicode NFD normalization
+ */
+inline auto unicode_nfd() {
+    return core::UnicodeNormalizer{unicode::NormalizationForm::NFD};
+}
+
+/**
+ * @brief Apply Unicode NFKC normalization
+ */
+inline auto unicode_nfkc() {
+    return core::UnicodeNormalizer{unicode::NormalizationForm::NFKC};
+}
+
+/**
+ * @brief Apply Unicode NFKD normalization
+ */
+inline auto unicode_nfkd() {
+    return core::UnicodeNormalizer{unicode::NormalizationForm::NFKD};
+}
+
+/**
+ * @brief Tokenize text by whitespace
+ */
+inline auto tokenize() {
+    return core::WhitespaceTokenizer{};
+}
+
+/**
+ * @brief Remove punctuation characters
+ */
+inline auto remove_punctuation() {
+    return filter::PunctuationFilter{};
+}
+
+/**
+ * @brief Detect language of text
+ */
+inline auto detect_language() {
+    return language::LanguageDetector{};
+}
+
+// === Common spell combinations ===
+
+/**
+ * @brief Standard text cleanup: normalize whitespace + trim + lowercase
+ */
+class TextCleanup : public spell_extensible<> {
+public:
+    TextCleanup() : spell_extensible{"TextCleanup", "Standard text cleanup"} {}
+
+private:
+    RuneSequence process(const RuneSequence& input) const override {
+        return make_caster(input)
+            .cast(spell::normalize_whitespace())
+            .cast(spell::trim())
+            .cast(spell::lowercase())
+            .result();
+    }
+};
+
+/**
+ * @brief Create a standard text cleanup spell
+ */
+inline auto cleanup() {
+    return TextCleanup{};
+}
+
+/**
+ * @brief Search preprocessing: cleanup + remove punctuation + unicode NFC
+ */
+class SearchPreprocess : public spell_extensible<> {
+public:
+    SearchPreprocess() : spell_extensible{"SearchPreprocess", "Search preprocessing"} {}
+
+private:
+    RuneSequence process(const RuneSequence& input) const override {
+        return make_caster(input)
+            .cast(spell::unicode_nfc())
+            .cast(spell::normalize_whitespace())
+            .cast(spell::trim())
+            .cast(spell::lowercase())
+            .cast(spell::remove_punctuation())
+            .result();
+    }
+};
+
+/**
+ * @brief Create a search preprocessing spell
+ */
+inline auto search_preprocess() {
+    return SearchPreprocess{};
+}
+
+// === Advanced: Custom spell creation ===
+
+/**
+ * @brief Create a custom spell from a lambda function
  *
- * This namespace provides a unified interface to all spell-related
- * functionality in the Rune Caster library. All spell classes,
- * factory functions, and utilities are available through this namespace.
- *
- * Usage examples:
  * @code
- * using namespace rune_caster::spell;
- *
- * // Use factory functions
- * auto normalizer = whitespace();
- * auto converter = lowercase();
- *
- * // Use core classes directly
- * auto custom_normalizer = core::WhitespaceNormalizer{true, false};
- *
- * // Compose spells
- * auto pipeline = compose(normalizer, converter);
- *
- * // Apply to text
- * auto result = cast_spell("  Hello WORLD  ", pipeline);
+ * auto my_spell = spell::custom("MySpell", "Description", [](const RuneSequence& input) {
+ *     // Your transformation logic here
+ *     return input;
+ * });
  * @endcode
  */
+template<typename Func>
+class CustomSpell : public spell_extensible<> {
+private:
+    Func func_;
 
-// === Backward compatibility aliases ===
+public:
+    CustomSpell(std::string name, std::string desc, Func func)
+        : spell_extensible{std::move(name), std::move(desc)}, func_{std::move(func)} {}
 
-// Import core spells into main namespace for backward compatibility
-using core::WhitespaceNormalizer;
-using core::UnicodeNormalizer;
-using core::CaseConverter;
-using core::TrimEdges;
-using core::WhitespaceTokenizer;
-
-// Import language spells
-using language::LanguageDetector;
-using language::GraphemeToPhoneme;
-
-// Import filter spells
-using filter::CategoryFilter;
-using filter::ScriptFilter;
-
-// === Legacy interface support ===
+private:
+    RuneSequence process(const RuneSequence& input) const override {
+        return func_(input);
+    }
+};
 
 /**
- * @brief Legacy SpellInterface for backward compatibility
- *
- * @deprecated Use spell_base instead
+ * @brief Create a custom spell from a function
  */
-template<typename InputType, typename OutputType = InputType>
-using SpellInterface [[deprecated("Use spell_base instead")]] = spell_base<InputType, OutputType>;
-
-/**
- * @brief Legacy type aliases for backward compatibility
- */
-using RuneSpell = spell_base<Rune, Rune>;
-using SequenceSpell = spell_base<RuneSequence, RuneSequence>;
-using StringSpell = spell_base<RuneSequence, std::string>;
+template<typename Func>
+auto custom(std::string name, std::string description, Func&& func) {
+    return CustomSpell<std::decay_t<Func>>{
+        std::move(name),
+        std::move(description),
+        std::forward<Func>(func)
+    };
+}
 
 } // namespace spell
 } // namespace rune_caster
 
 /**
- * @brief Documentation for spell system modules
+ * @brief Quick reference for available spells:
  *
- * @namespace rune_caster::spell::core
- * @brief Core text normalization spells
+ * Text case:
+ * - spell::lowercase()
+ * - spell::uppercase()
+ * - spell::titlecase()
  *
- * Contains fundamental text processing spells:
- * - WhitespaceNormalizer: Normalize whitespace characters
- * - CaseConverter: Convert text case (lower, upper, title)
- * - UnicodeNormalizer: Apply Unicode normalization forms
+ * Whitespace:
+ * - spell::trim()
+ * - spell::normalize_whitespace()
  *
- * @namespace rune_caster::spell::language
- * @brief Language-specific processing spells
+ * Unicode:
+ * - spell::unicode_nfc()
+ * - spell::unicode_nfd()
+ * - spell::unicode_nfkc()
+ * - spell::unicode_nfkd()
  *
- * Contains spells for language-aware processing:
- * - LanguageDetector: Detect text language
- * - GraphemeToPhoneme: Convert text to phonetic representation
+ * Tokenization:
+ * - spell::tokenize()
  *
- * @namespace rune_caster::spell::filter
- * @brief Text filtering and selection spells
+ * Filtering:
+ * - spell::remove_punctuation()
  *
- * Contains spells for filtering text content:
- * - CategoryFilter: Filter by Unicode categories
- * - ScriptFilter: Filter by Unicode scripts
+ * Language:
+ * - spell::detect_language()
  *
- * @namespace rune_caster::spell::composition
- * @brief Spell composition and chaining utilities
+ * Combinations:
+ * - spell::cleanup()
+ * - spell::search_preprocess()
  *
- * Contains utilities for combining spells:
- * - SpellComposition: Template for chaining spells
- * - compose(): Function for creating spell compositions
- * - cast_spell(): Helper functions for applying spells
- *
- * @namespace rune_caster::spell::factory
- * @brief Factory functions for common spell patterns
- *
- * Contains convenient factory functions:
- * - whitespace(), lowercase(), uppercase(), titlecase()
- * - unicode_nfc(), unicode_nfd(), unicode_nfkc(), unicode_nfkd()
- * - text_normalizer(), search_preprocessor(), display_formatter()
+ * Custom:
+ * - spell::custom(name, desc, func)
  */

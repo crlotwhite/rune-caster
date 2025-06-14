@@ -16,13 +16,12 @@
 #include <string>
 #include <vector>
 #include "rune_caster/spell.hpp"
-#include "rune_caster/caster.hpp"
 
 using namespace rune_caster;
 
 int main() {
     std::cout << "📝 === CaseConverter Usage Example ===" << std::endl;
-    std::cout << "Modern text case transformation with C++20 enhancements" << std::endl;
+    std::cout << "Modern text case transformation with simplified API" << std::endl;
     std::cout << std::endl;
 
     try {
@@ -30,19 +29,20 @@ int main() {
         std::cout << "🔤 1. Basic Case Conversions:" << std::endl;
 
         std::string sample_text = "Hello WORLD! This is a MiXeD CaSe Text.";
+        auto text = RuneSequence::from_utf8(sample_text);
         std::cout << "  🔹 Original: \"" << sample_text << "\"" << std::endl;
 
         // 소문자 변환
-        auto lowercase_result = spell::cast_spell(sample_text, spell::lowercase());
-        std::cout << "  ✨ Lowercase: \"" << lowercase_result << "\"" << std::endl;
+        auto lowercase_result = text | spell::lowercase();
+        std::cout << "  ✨ Lowercase: \"" << lowercase_result.to_utf8() << "\"" << std::endl;
 
         // 대문자 변환
-        auto uppercase_result = spell::cast_spell(sample_text, spell::uppercase());
-        std::cout << "  ✨ Uppercase: \"" << uppercase_result << "\"" << std::endl;
+        auto uppercase_result = text | spell::uppercase();
+        std::cout << "  ✨ Uppercase: \"" << uppercase_result.to_utf8() << "\"" << std::endl;
 
         // 제목 케이스 변환
-        auto titlecase_result = spell::cast_spell(sample_text, spell::titlecase());
-        std::cout << "  ✨ Titlecase: \"" << titlecase_result << "\"" << std::endl;
+        auto titlecase_result = text | spell::titlecase();
+        std::cout << "  ✨ Titlecase: \"" << titlecase_result.to_utf8() << "\"" << std::endl;
 
         std::cout << std::endl;
 
@@ -50,17 +50,18 @@ int main() {
         std::cout << "⚡ 2. Pipeline Integration:" << std::endl;
 
         std::string messy_input = "  programming   WITH   c++   IS   awesome  ";
+        auto messy_text = RuneSequence::from_utf8(messy_input);
         std::cout << "  🔹 Messy input: \"" << messy_input << "\"" << std::endl;
 
         // 공백 정리 + 케이스 변환 파이프라인
-        auto cleaned_lower = make_caster(RuneSequence::from_utf8(messy_input))
-                            .cast(spell::WhitespaceNormalizer{})
-                            .cast(spell::CaseConverter{spell::CaseConverter::CaseType::Lower})
+        auto cleaned_lower = make_caster(messy_text)
+                            .cast(spell::normalize_whitespace())
+                            .cast(spell::lowercase())
                             .result();
 
-        auto cleaned_title = make_caster(RuneSequence::from_utf8(messy_input))
-                            .cast(spell::WhitespaceNormalizer{})
-                            .cast(spell::CaseConverter{spell::CaseConverter::CaseType::Title})
+        auto cleaned_title = make_caster(messy_text)
+                            .cast(spell::normalize_whitespace())
+                            .cast(spell::titlecase())
                             .result();
 
         std::cout << "  ✨ Clean + Lowercase: \"" << cleaned_lower.to_utf8() << "\"" << std::endl;
@@ -80,13 +81,14 @@ int main() {
         };
 
         for (const auto& text : multilingual_texts) {
+            auto input_seq = RuneSequence::from_utf8(text);
             std::cout << "  🔹 Input: \"" << text << "\"" << std::endl;
 
-            auto lower_result = spell::cast_spell(text, spell::lowercase());
-            auto title_result = spell::cast_spell(text, spell::titlecase());
+            auto lower_result = input_seq | spell::lowercase();
+            auto title_result = input_seq | spell::titlecase();
 
-            std::cout << "    - Lower: \"" << lower_result << "\"" << std::endl;
-            std::cout << "    - Title: \"" << title_result << "\"" << std::endl;
+            std::cout << "    - Lower: \"" << lower_result.to_utf8() << "\"" << std::endl;
+            std::cout << "    - Title: \"" << title_result.to_utf8() << "\"" << std::endl;
         }
 
         std::cout << std::endl;
@@ -97,8 +99,8 @@ int main() {
         // 사용자 이름 정규화
         std::string user_name = "  john   DOE  ";
         auto normalized_name = make_caster(RuneSequence::from_utf8(user_name))
-                              .cast(spell::WhitespaceNormalizer{})
-                              .cast(spell::CaseConverter{spell::CaseConverter::CaseType::Title})
+                              .cast(spell::normalize_whitespace())
+                              .cast(spell::titlecase())
                               .result();
 
         std::cout << "  🔹 User name normalization:" << std::endl;
@@ -107,9 +109,7 @@ int main() {
 
         // URL slug 생성
         std::string article_title = "How to Use Modern C++ Features";
-        auto url_slug = make_caster(RuneSequence::from_utf8(article_title))
-                       .cast(spell::CaseConverter{spell::CaseConverter::CaseType::Lower})
-                       .result();
+        auto url_slug = RuneSequence::from_utf8(article_title) | spell::lowercase();
 
         std::cout << "  🔹 URL slug generation:" << std::endl;
         std::cout << "    Title: \"" << article_title << "\"" << std::endl;
@@ -117,11 +117,11 @@ int main() {
 
         // 데이터 표준화
         std::string database_field = "USER_PROFILE_DATA";
-        auto standardized = spell::cast_spell(database_field, spell::titlecase());
+        auto standardized = RuneSequence::from_utf8(database_field) | spell::titlecase();
 
         std::cout << "  🔹 Database field standardization:" << std::endl;
         std::cout << "    Field: \"" << database_field << "\"" << std::endl;
-        std::cout << "    ✨ Display: \"" << standardized << "\"" << std::endl;
+        std::cout << "    ✨ Display: \"" << standardized.to_utf8() << "\"" << std::endl;
 
         std::cout << std::endl;
 
@@ -140,8 +140,8 @@ int main() {
         for (size_t i = 0; i < batch_data.size(); ++i) {
             // 완전한 정규화 파이프라인
             auto processed = make_caster(RuneSequence::from_utf8(batch_data[i]))
-                           .cast(spell::WhitespaceNormalizer{true, true})  // 공백 완전 정리
-                           .cast(spell::CaseConverter{spell::CaseConverter::CaseType::Title})  // 제목 케이스
+                           .cast(spell::normalize_whitespace(true, true))  // 공백 완전 정리
+                           .cast(spell::titlecase())  // 제목 케이스
                            .result();
 
             std::cout << "    [" << (i+1) << "] \"" << batch_data[i] << "\" → \""
@@ -157,9 +157,7 @@ int main() {
         std::cout << "  🔹 Large text processing: \"" << large_text.substr(0, 30) << "...\"" << std::endl;
 
         // 효율적인 체인 처리
-        auto efficient_result = make_caster(RuneSequence::from_utf8(large_text))
-                               .cast(spell::CaseConverter{spell::CaseConverter::CaseType::Lower})
-                               .result();
+        auto efficient_result = RuneSequence::from_utf8(large_text) | spell::lowercase();
 
         std::cout << "  ✨ Processed (" << efficient_result.size() << " characters): \""
                   << efficient_result.to_utf8().substr(0, 30) << "...\"" << std::endl;
@@ -182,13 +180,29 @@ int main() {
         };
 
         for (const auto& test_case : edge_cases) {
-            auto result = spell::cast_spell(test_case, spell::titlecase());
-            std::cout << "  🔹 \"" << test_case << "\" → \"" << result << "\"" << std::endl;
+            auto result = RuneSequence::from_utf8(test_case) | spell::titlecase();
+            std::cout << "  🔹 \"" << test_case << "\" → \"" << result.to_utf8() << "\"" << std::endl;
         }
 
         std::cout << std::endl;
+
+        // === 8. 조합 스펠 사용 ===
+        std::cout << "🔗 8. Using Predefined Combinations:" << std::endl;
+
+        std::string messy_text_input = "  hello   WORLD   from   RUNE-caster  ";
+        std::cout << "  🔹 Messy input: \"" << messy_text_input << "\"" << std::endl;
+
+        // 표준 정리 사용
+        auto cleaned = RuneSequence::from_utf8(messy_text_input) | spell::cleanup();
+        std::cout << "  ✨ Standard cleanup: \"" << cleaned.to_utf8() << "\"" << std::endl;
+
+        // 검색 전처리 사용
+        auto search_ready = RuneSequence::from_utf8(messy_text_input) | spell::search_preprocess();
+        std::cout << "  ✨ Search preprocess: \"" << search_ready.to_utf8() << "\"" << std::endl;
+
+        std::cout << std::endl;
         std::cout << "🎉 === CaseConverter Example Completed Successfully! ===" << std::endl;
-        std::cout << "Ready for production use with robust case handling! 🚀" << std::endl;
+        std::cout << "Ready for production use with simplified spell API! 🚀" << std::endl;
 
     } catch (const std::exception& e) {
         std::cerr << "❌ Error: " << e.what() << std::endl;

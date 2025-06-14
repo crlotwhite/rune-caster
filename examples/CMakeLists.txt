@@ -7,7 +7,7 @@
 #
 # 예제 구성:
 # - 기초 예제: Rune 및 RuneSequence 기본 사용법
-# - 스펠 예제: 텍스트 처리 및 변환 기능
+# - 스펠 예제: 간단한 API로 텍스트 처리 및 변환 기능
 # - 파이프라인 예제: 고급 체이닝 및 워크플로우
 # ================================================================
 
@@ -99,7 +99,7 @@ add_custom_command(TARGET examples_all POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E echo "📋 Available examples:"
     COMMAND ${CMAKE_COMMAND} -E echo "  - basic_usage: Rune class fundamentals"
     COMMAND ${CMAKE_COMMAND} -E echo "  - sequence_usage: RuneSequence container operations"
-    COMMAND ${CMAKE_COMMAND} -E echo "  - spell_demo: Comprehensive spell system showcase"
+    COMMAND ${CMAKE_COMMAND} -E echo "  - spell_demo: Simplified spell system showcase"
     COMMAND ${CMAKE_COMMAND} -E echo "  - case_converter_usage: Text case transformation"
     COMMAND ${CMAKE_COMMAND} -E echo "  - caster_pipeline_demo: Advanced pipeline workflows"
     COMMAND ${CMAKE_COMMAND} -E echo ""
