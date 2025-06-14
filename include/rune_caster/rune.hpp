@@ -280,10 +280,63 @@ inline constexpr bool Rune::is_letter() const noexcept { return unicode::is_lett
 inline constexpr bool Rune::is_digit() const noexcept { return unicode::is_digit(codepoint_); }
 inline constexpr bool Rune::is_whitespace() const noexcept { return unicode::is_whitespace(codepoint_); }
 inline constexpr bool Rune::is_punctuation() const noexcept { return unicode::is_punctuation(codepoint_); }
+
+// === Language detection (inline implementation) ===
+inline constexpr language::Code Rune::detect_language(char32_t cp) noexcept {
+    // Korean (Hangul)
+    if ((cp >= 0x1100 && cp <= 0x11FF) ||  // Hangul Jamo
+        (cp >= 0x3130 && cp <= 0x318F) ||  // Hangul Compatibility Jamo
+        (cp >= 0xAC00 && cp <= 0xD7AF)) {  // Hangul Syllables
+        return language::Code::Korean;
+    }
+    
+    // Japanese
+    if ((cp >= 0x3040 && cp <= 0x309F) ||  // Hiragana
+        (cp >= 0x30A0 && cp <= 0x30FF) ||  // Katakana
+        (cp >= 0x31F0 && cp <= 0x31FF)) {  // Katakana Phonetic Extensions
+        return language::Code::Japanese;
+    }
+    
+    // Chinese (CJK Ideographs)
+    if ((cp >= 0x4E00 && cp <= 0x9FFF) ||  // CJK Unified Ideographs
+        (cp >= 0x3400 && cp <= 0x4DBF) ||  // CJK Extension A
+        (cp >= 0x20000 && cp <= 0x2A6DF)) { // CJK Extension B
+        return language::Code::Chinese;
+    }
+    
+    // English/Latin
+    if ((cp <= 0x024F) ||                   // Basic Latin + Latin Extended
+        (cp >= 0x1E00 && cp <= 0x1EFF)) {  // Latin Extended Additional
+        return language::Code::English;
+    }
+    
+    return language::Code::Unknown;
+}
 inline constexpr bool Rune::is_vowel() const noexcept {
     char32_t c = codepoint_;
-    return (c == U'a' || c == U'e' || c == U'i' || c == U'o' || c == U'u' ||
-            c == U'A' || c == U'E' || c == U'I' || c == U'O' || c == U'U');
+    
+    // 라틴 알파벳 모음 (영어)
+    if (c == U'a' || c == U'e' || c == U'i' || c == U'o' || c == U'u' ||
+        c == U'A' || c == U'E' || c == U'I' || c == U'O' || c == U'U') {
+        return true;
+    }
+    
+    // 한글 모음 (ㅏ-ㅣ 범위)
+    if (c >= U'ㅏ' && c <= U'ㅣ') {
+        return true;
+    }
+    
+    // 일본어 모음 (히라가나)
+    if (c == U'あ' || c == U'い' || c == U'う' || c == U'え' || c == U'お') {
+        return true;
+    }
+    
+    // 일본어 모음 (가타카나)
+    if (c == U'ア' || c == U'イ' || c == U'ウ' || c == U'エ' || c == U'オ') {
+        return true;
+    }
+    
+    return false;
 }
 inline constexpr bool Rune::is_consonant() const noexcept {
     return is_letter() && !is_vowel();

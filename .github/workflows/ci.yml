@@ -1,25 +1,245 @@
-name: CI
+name: 🚀 CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master, develop ]
   pull_request:
+    branches: [ main, master ]
+  schedule:
+    # 매주 월요일 오전 2시에 실행 (의존성 취약점 체크)
+    - cron: '0 2 * * 1'
 
 jobs:
-  build:
+  # 멀티플랫폼 빌드 및 테스트
+  build-and-test:
+    name: 🏗️ Build & Test
     runs-on: ${{ matrix.os }}
+    
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        build_type: [Debug, Release]
+        compiler:
+          - name: gcc
+            cc: gcc
+            cxx: g++
+          - name: clang
+            cc: clang
+            cxx: clang++
+        exclude:
+          # Windows에서는 GCC/Clang 제외 (Visual Studio만 사용)
+          - os: windows-latest
+            compiler:
+              name: gcc
+          - os: windows-latest
+            compiler:
+              name: clang
+              
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Ninja
-        uses: seanmiddleditch/gha-setup-ninja@v3
-      - name: Configure
-        run: cmake -B build -G Ninja -DRUNE_CASTER_ENABLE_TESTS=ON
-      - name: Build
-        run: cmake --build build --parallel
-      - name: Run tests
-        run: |
-          cd build
-          ctest --output-on-failure
+    - name: 📥 Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: 🔧 Setup C++ Environment
+      uses: aminya/setup-cpp@v1
+      with:
+        compiler: ${{ matrix.compiler.name }}
+        cmake: true
+        ninja: true
+        doxygen: true
+      if: runner.os != 'Windows'
+      
+    - name: 🪟 Setup Windows Environment
+      if: runner.os == 'Windows'
+      uses: microsoft/setup-msbuild@v1.3
+      
+    - name: 🗂️ Setup Environment Variables
+      shell: bash
+      run: |
+        echo "CC=${{ matrix.compiler.cc }}" >> $GITHUB_ENV
+        echo "CXX=${{ matrix.compiler.cxx }}" >> $GITHUB_ENV
+      if: runner.os != 'Windows'
+      
+    - name: 📊 System Info
+      shell: bash
+      run: |
+        echo "OS: ${{ runner.os }}"
+        echo "Build Type: ${{ matrix.build_type }}"
+        echo "Compiler: ${{ matrix.compiler.name }}"
+        
+        if command -v ${{ matrix.compiler.cxx }} &> /dev/null; then
+          ${{ matrix.compiler.cxx }} --version
+        fi
+        
+        cmake --version
+        
+    - name: 🔨 Configure CMake
+      shell: bash
+      run: |
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DRUNE_CASTER_ENABLE_TESTS=ON \
+            -DRUNE_CASTER_ENABLE_EXAMPLES=ON \
+            -DRUNE_CASTER_ENABLE_DOCS=OFF
+        else
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} \
+            -DRUNE_CASTER_ENABLE_TESTS=ON \
+            -DRUNE_CASTER_ENABLE_EXAMPLES=ON \
+            -DRUNE_CASTER_ENABLE_DOCS=OFF \
+            -GNinja
+        fi
+        
+    - name: 🏗️ Build
+      shell: bash
+      run: |
+        cmake --build build --config ${{ matrix.build_type }} --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
+        
+    - name: 🧪 Run Tests
+      shell: bash
+      working-directory: build
+      run: |
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          ctest --config ${{ matrix.build_type }} --output-on-failure --parallel $(nproc 2>/dev/null || echo 2)
+        else
+          ctest --output-on-failure --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
+        fi
+        
+    - name: 🚀 Run Examples
+      shell: bash
+      working-directory: build
+      run: |
+        echo "🔤 Running basic_usage example..."
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          ./examples/${{ matrix.build_type }}/basic_usage.exe || ./examples/basic_usage.exe
+        else
+          ./examples/basic_usage
+        fi
+        
+        echo "✨ Running spell_demo example..."
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          ./examples/${{ matrix.build_type }}/spell_demo.exe || ./examples/spell_demo.exe
+        else
+          ./examples/spell_demo
+        fi
+        
+    - name: 📊 Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.compiler.name }}
+        path: |
+          build/Testing/
+          build/tests/
+        retention-days: 30
+
+  # 코드 품질 검사
+  code-quality:
+    name: 🔍 Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v4
+      
+    - name: 🔧 Setup C++ Environment
+      uses: aminya/setup-cpp@v1
+      with:
+        compiler: clang
+        cmake: true
+        cppcheck: true
+        
+    - name: 📊 Static Analysis with Cppcheck
+      run: |
+        cppcheck \
+          --enable=all \
+          --std=c++20 \
+          --language=c++ \
+          --platform=native \
+          --suppress=missingIncludeSystem \
+          --suppress=unusedFunction \
+          --suppress=unmatchedSuppression \
+          --inline-suppr \
+          --xml \
+          --xml-version=2 \
+          include/ src/ 2> cppcheck-report.xml || true
+          
+    - name: 📋 Upload Static Analysis Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: static-analysis-results
+        path: cppcheck-report.xml
+        retention-days: 30
+
+  # 의존성 보안 검사
+  security-scan:
+    name: 🛡️ Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v4
+      
+    - name: 🔍 Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+      continue-on-error: true
+      
+    - name: 📋 Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # 성능 벤치마크 (Release 빌드에서만)
+  benchmark:
+    name: ⚡ Performance Benchmark
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v4
+      
+    - name: 🔧 Setup C++ Environment
+      uses: aminya/setup-cpp@v1
+      with:
+        compiler: clang
+        cmake: true
+        
+    - name: 🏗️ Build Release
+      run: |
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_CXX_COMPILER=clang++ \
+          -DRUNE_CASTER_ENABLE_TESTS=ON \
+          -DRUNE_CASTER_ENABLE_EXAMPLES=ON \
+          -GNinja
+        cmake --build build --parallel $(nproc)
+        
+    - name: ⚡ Run Performance Tests
+      working-directory: build
+      run: |
+        echo "🚀 Running performance benchmarks..."
+        # 여기에 벤치마크 테스트 실행 코드 추가
+        # ./tests/performance_tests 등
+        echo "📊 Benchmark completed!"
+        
+    - name: 📊 Store benchmark result
+      uses: benchmark-action/github-action-benchmark@v1
+      if: github.event_name != 'pull_request'
+      with:
+        tool: 'customSmallerIsBetter'
+        output-file-path: benchmark-results.json
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        auto-push: true
+      continue-on-error: true

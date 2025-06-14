@@ -1,277 +1,155 @@
-# 🚀 Rune Caster 5분 빠른 시작
+# 🚀 Rune Caster 빠른 시작 가이드
 
-> **현재 상태**: ✅ **완전히 작동하는 상태** - 바로 빌드하고 사용할 수 있습니다!
+환영합니다! 이 가이드는 Rune Caster를 빠르게 시작할 수 있도록 도와드립니다.
 
-## ⚡ 초간단 시작 (Windows)
+## 📋 사전 요구사항
 
-```powershell
-# 1. 프로젝트 클론
-git clone <your-repository-url>
+- **C++ 컴파일러**: C++20 지원 (GCC 9+, Clang 10+, MSVC 19.20+)
+- **CMake**: 3.20 이상
+- **Git**: 소스 코드 클론용
+
+## 🔧 설치
+
+### 1. 저장소 클론
+
+```bash
+git clone https://github.com/yourusername/rune-caster.git
 cd rune-caster
+```
 
-# 2. 빌드 (자동 의존성 다운로드 포함)
+### 2. 빌드
+
+```bash
 mkdir build && cd build
 cmake ..
-cmake --build . --config Release
-
-# 3. 예제 실행 - 바로 작동됩니다!
-.\examples\Release\basic_usage.exe
-.\examples\Release\sequence_usage.exe
+cmake --build .
 ```
 
-## 🎯 즉시 사용 가능한 예제
+### 3. 테스트 실행
 
-### 기본 문자 처리
+```bash
+ctest --verbose
+```
+
+## 💡 기본 사용법
+
+### Rune 기본 사용
+
 ```cpp
-#include <rune_caster/rune.hpp>
+#include "rune_caster/rune.hpp"
 using namespace rune_caster;
 
-// 한국어 문자 처리
-Rune korean{U'안'};
-std::cout << "Language: " << static_cast<int>(korean.language()) << std::endl;
+// 다양한 언어의 문자 생성
+Rune korean(U'가');
+Rune english(U'A');
+Rune japanese(U'あ');
+
+// 언어 자동 감지
+std::cout << "Korean: " << static_cast<int>(korean.language()) << std::endl;
+
+// UTF-8 변환
 std::cout << "UTF-8: " << korean.to_utf8() << std::endl;
 
-// 영어 문자 처리
-Rune english{U'A'};
+// 문자 분류
 std::cout << "Is vowel: " << english.is_vowel() << std::endl;
-std::cout << "Is letter: " << english.is_letter() << std::endl;
 ```
 
-### 텍스트 시퀀스 처리
+### RuneSequence 사용
+
 ```cpp
-#include <rune_caster/rune_sequence.hpp>
-using namespace rune_caster;
+#include "rune_caster/rune_sequence.hpp"
 
-// 다국어 텍스트 처리
-auto sequence = RuneSequence::from_utf8("Hello, 안녕하세요! こんにちは");
-std::cout << "Length: " << sequence.size() << std::endl;
-std::cout << "Primary language: " << static_cast<int>(sequence.primary_language()) << std::endl;
+// UTF-8 문자열에서 생성
+auto sequence = RuneSequence::from_utf8("안녕하세요 Hello こんにちは");
 
-// STL 스타일 반복자 사용
+// STL 스타일 이터레이션
 for (const auto& rune : sequence) {
-    std::cout << "Codepoint: " << rune.codepoint() << std::endl;
+    std::cout << "Char: " << rune.to_utf8() << std::endl;
 }
 ```
 
-## ✅ 확인된 기능들
+### Spell 텍스트 처리
 
-| 기능 | 상태 | 설명 |
-|------|------|------|
-| **한국어 처리** | ✅ 완전 지원 | 한글 자모, 완성형 문자 인식 |
-| **영어 처리** | ✅ 완전 지원 | 모음/자음 분류, 대소문자 구분 |
-| **일본어 처리** | ✅ 완전 지원 | 히라가나, 가타카나, 한자 지원 |
-| **UTF-8 변환** | ✅ 완전 지원 | 양방향 UTF-8 ↔ UTF-32 변환 |
-| **언어 자동 감지** | ✅ 완전 지원 | 문자별 언어 코드 자동 할당 |
-| **음성 표현** | ✅ 완전 지원 | Phoneme 저장 및 관리 |
-| **STL 호환성** | ✅ 완전 지원 | 표준 컨테이너/알고리즘 사용 가능 |
+```cpp
+#include "rune_caster/spell.hpp"
 
-## 📦 자동 설치되는 의존성
-
-프로젝트에서 자동으로 다운로드하고 빌드하는 라이브러리들:
-- **fmt 10.2.1** - 현대적 C++ 포맷팅
-- **spdlog 1.12.0** - 고성능 로깅
-- **내장 Unicode 구현** - ICU 없이도 완전 동작
-
-## 🔧 요구사항
-
-- **Windows 10/11** (테스트됨)
-- **Visual Studio 2022** (Community Edition도 가능)
-- **CMake 3.20+**
-- **Git** (의존성 자동 다운로드용)
-
-## 📁 빌드 결과물
-
-성공적인 빌드 후 생성되는 파일들:
-```
-build/
-├── Release/
-│   └── rune_caster.lib          # 메인 라이브러리 (96KB)
-├── examples/Release/
-│   ├── basic_usage.exe          # 기본 사용 예제
-│   └── sequence_usage.exe       # 시퀀스 사용 예제
-└── _deps/                       # 자동 다운로드된 의존성들
-    ├── fmt-build/Release/fmt.lib
-    └── spdlog-build/Release/spdlog.lib
+// 파이프 연산자로 텍스트 처리
+std::string text = "  Hello   WORLD!  ";
+auto result = text | spell::normalize_whitespace() 
+                  | spell::lowercase() 
+                  | spell::trim();
+// 결과: "hello world!"
 ```
 
-## 🎮 인터랙티브 데모
+### Caster 파이프라인
 
-빌드 후 바로 실행해볼 수 있는 예제들:
+```cpp
+#include "rune_caster/caster.hpp"
 
-### basic_usage.exe 실행 결과:
-```
-=== Rune Caster Basic Usage Example ===
-Version: 1.0.0
-Description: Modern C++ Text Processing Framework
+// 복잡한 텍스트 처리 파이프라인
+auto pipeline = make_caster()
+    .cast(spell::normalize_whitespace())
+    .cast(spell::titlecase())
+    .cast(spell::unicode_normalize(NormalizationForm::NFC));
 
-1. Creating basic Runes:
-  Latin 'A': codepoint=65, language=2
-  Hangul '가': codepoint=44032, language=1
-  Hiragana 'あ': codepoint=12354, language=3
-
-2. Character classification:
-  'A' is_letter: 1
-  'A' is_vowel: 1
-  'A' is_consonant: 0
+std::string result = pipeline("  hello   world  ");
+// 결과: "Hello World"
 ```
 
-### sequence_usage.exe 실행 결과:
-```
-=== Rune Caster Sequence Usage Example ===
-1. Creating RuneSequences:
-  "Hello, 안녕하세요?" size: 13
-  Korean sequence primary language: 1
+## 🔍 고급 기능
 
-2. STL Container Operations:
-  Built sequence size: 5
-  Characters in sequence: 72 101 108 108 111
-```
+### 다국어 지원
 
-## 🚀 다음 단계
+```cpp
+// 한글 모음 인식
+Rune hangul_vowel(U'ㅏ');
+assert(hangul_vowel.is_vowel() == true);
 
-1. **프로젝트에 통합**:
-   ```cmake
-   # 당신의 CMakeLists.txt에 추가
-   add_subdirectory(rune-caster)
-   target_link_libraries(your_project PRIVATE rune_caster)
-   ```
-
-2. **고급 기능 탐색**:
-   - 음성학적 표현 (Phoneme) 활용
-   - 다국어 텍스트 정규화
-   - 언어별 특수 처리 로직
-
-3. **문서 확인**:
-   - `docs/api-design.md` - 상세 API 가이드
-   - `docs/technical-architecture.md` - 기술 아키텍처
-   - `docs/DEPENDENCIES.md` - 의존성 관리 가이드
-
-## 🆘 문제 해결
-
-### 빌드 실패 시:
-```powershell
-# 이전 빌드 정리 후 재시도
-Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
-mkdir build && cd build
-cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON
-cmake --build . --config Release --verbose
+// 일본어 모음 인식
+Rune hiragana_vowel(U'あ');
+assert(hiragana_vowel.is_vowel() == true);
 ```
 
-### 여전히 문제가 있다면:
-- Visual Studio Developer Command Prompt 사용
-- `cmake --version`으로 3.20+ 확인
-- Git이 PATH에 있는지 확인
+### 커스텀 Spell 작성
+
+```cpp
+auto custom_spell = [](const RuneSequence& input) {
+    RuneSequence output;
+    for (const auto& rune : input) {
+        if (rune.is_digit()) {
+            output.push_back(Rune(U'_'));
+        } else {
+            output.push_back(rune);
+        }
+    }
+    return output;
+};
+
+// 사용
+std::string result = "Hello123World" | custom_spell;
+// 결과: "Hello___World"
+```
+
+## 📖 다음 단계
+
+- [API 문서](https://yourusername.github.io/rune-caster) 살펴보기
+- [예제 프로그램](examples/) 실행해보기
+- [개발 가이드](docs/development-guide.md) 읽기
+
+## 🛠️ 문제 해결
+
+### 일반적인 문제
+
+1. **빌드 실패**: C++20 지원 컴파일러를 사용하세요
+2. **의존성 오류**: ICU 라이브러리 설치를 권장합니다
+3. **테스트 실패**: `ctest --verbose`로 자세한 정보 확인
+
+### 도움말
+
+- [이슈 트래커](https://github.com/yourusername/rune-caster/issues)
+- [토론 포럼](https://github.com/yourusername/rune-caster/discussions)
+- [위키](https://github.com/yourusername/rune-caster/wiki)
 
 ---
 
-**🎉 축하합니다!** 이제 현대적인 C++로 다국어 텍스트 처리를 시작할 수 있습니다!
-
-## Simple Spell Usage
-
-The Rune Caster library provides a simple, unified API for text processing. You only need to include one header:
-
-```cpp
-#include <rune_caster/spell.hpp>
-using namespace rune_caster;
-```
-
-## Basic Text Processing
-
-### Simple Operations
-```cpp
-std::string input = "  Hello, WORLD!  ";
-auto text = RuneSequence::from_utf8(input);
-
-// Convert to lowercase
-auto lower = text | spell::lowercase();
-// Result: "  hello, world!  "
-
-// Trim whitespace
-auto trimmed = text | spell::trim();
-// Result: "Hello, WORLD!"
-
-// Chain operations with pipe operator
-auto result = text | spell::lowercase() | spell::trim();
-// Result: "hello, world!"
-```
-
-### Using Caster for Complex Chains
-```cpp
-auto result = make_caster(text)
-    .cast(spell::normalize_whitespace())  // Collapse multiple spaces
-    .cast(spell::trim())                  // Remove leading/trailing spaces
-    .cast(spell::lowercase())             // Convert to lowercase
-    .cast(spell::remove_punctuation())    // Remove punctuation
-    .result();
-// Result: "hello world"
-```
-
-## Available Spells
-
-### Text Case
-- `spell::lowercase()` - Convert to lowercase
-- `spell::uppercase()` - Convert to uppercase
-- `spell::titlecase()` - Convert to title case
-
-### Whitespace
-- `spell::trim()` - Remove leading/trailing whitespace
-- `spell::normalize_whitespace()` - Collapse multiple spaces
-
-### Unicode
-- `spell::unicode_nfc()` - Apply NFC normalization
-- `spell::unicode_nfd()` - Apply NFD normalization
-- `spell::unicode_nfkc()` - Apply NFKC normalization
-- `spell::unicode_nfkd()` - Apply NFKD normalization
-
-### Filtering
-- `spell::remove_punctuation()` - Remove punctuation characters
-
-### Language
-- `spell::detect_language()` - Detect text language
-
-### Tokenization
-- `spell::tokenize()` - Split text by whitespace
-
-## Predefined Combinations
-
-### Standard Cleanup
-```cpp
-auto cleaned = text | spell::cleanup();
-// Equivalent to: normalize_whitespace + trim + lowercase
-```
-
-### Search Preprocessing
-```cpp
-auto preprocessed = text | spell::search_preprocess();
-// Equivalent to: unicode_nfc + normalize_whitespace + trim + lowercase + remove_punctuation
-```
-
-## Custom Spells
-
-Create your own spells using lambda functions:
-
-```cpp
-auto reverse_spell = spell::custom("Reverse", "Reverse text",
-    [](const RuneSequence& input) {
-        RuneSequence result;
-        for (auto it = input.rbegin(); it != input.rend(); ++it) {
-            result.push_back(*it);
-        }
-        return result;
-    });
-
-auto reversed = make_caster(RuneSequence::from_utf8("Hello"))
-    .cast(reverse_spell)
-    .result();
-// Result: "olleH"
-```
-
-## Building Your Project
-
-Add to your CMakeLists.txt:
-```cmake
-find_package(rune_caster REQUIRED)
-target_link_libraries(your_target rune_caster::rune_caster)
-```
-
-That's it! The spell system is designed to be simple and intuitive while providing powerful text processing capabilities.
+🎉 **축하합니다!** Rune Caster를 성공적으로 설정했습니다.

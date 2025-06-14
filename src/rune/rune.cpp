@@ -34,7 +34,7 @@ constexpr bool Rune::is_latin() const noexcept {
     // Basic Latin (U+0000-U+007F) and Latin-1 Supplement (U+0080-U+00FF)
     // Latin Extended-A (U+0100-U+017F) and Latin Extended-B (U+0180-U+024F)
     // Latin Extended Additional (U+1E00-U+1EFF)
-    return (codepoint_ >= 0x0000 && codepoint_ <= 0x024F) ||
+    return (codepoint_ <= 0x024F) ||
            (codepoint_ >= 0x1E00 && codepoint_ <= 0x1EFF);
 }
 
@@ -225,24 +225,6 @@ Rune Rune::from_utf16(std::u16string_view utf16_char) {
     return Rune(codepoint);
 }
 
-// === Language detection (constexpr) ===
-
-constexpr language::Code Rune::detect_language(char32_t cp) noexcept {
-    using namespace unicode;
-    switch (get_script(cp)) {
-        case Script::Hangul:
-            return language::Code::Korean;
-        case Script::Hiragana:
-        case Script::Katakana:
-            return language::Code::Japanese;
-        case Script::Han:
-            return language::Code::Chinese; // rough heuristic
-        case Script::Latin:
-            return language::Code::English;
-        default:
-            break;
-    }
-    return language::Code::Unknown;
-}
+// === Language detection is now defined inline in header ===
 
 } // namespace rune_caster

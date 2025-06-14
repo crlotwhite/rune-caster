@@ -1,5 +1,151 @@
-.cache/
+# Build directories
 build/
 build_*/
+cmake-build-*/
+out/
+_build/
+_builds/
+
+# IDEs and editors
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+.vim/
+.emacs.d/
+.sublime-text-*
+*.code-workspace
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Cache directories
+.cache/
+.ccache/
+.clangd/
+compile_commands.json
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+CPackConfig.cmake
+CPackSourceConfig.cmake
+Testing/
+
+# CTest
+CTestTestfile.cmake
+
+# Visual Studio
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+x64/
+x86/
+Debug/
+Release/
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+[Mm]in[Ss]ize[Rr]el/
+[Rr]el[Ww]ith[Dd]eb[Ii]nfo/
+
+# Documentation build
+docs/html/
+docs/latex/
+docs/xml/
+docs/man/
+docs/rtf/
+doxygen_warnings.txt
+
+# Package managers
+conan/
+vcpkg/
+.conan/
+
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.pdb
+*.ilk
+*.obj
+*.o
+
+# Archives
+*.zip
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.7z
+
+# Python (if used for scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.Python
+env/
+venv/
+.venv/
+
+# Node.js (if used for tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Local configuration
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Coverage reports
+coverage/
+*.gcov
+*.gcda
+*.gcno
+
+# Profiling data
+*.prof
+callgrind.out.*
+perf.data*
+
+# Security
+*.pem
+*.key
+*.crt
+secrets.txt

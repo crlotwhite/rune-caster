@@ -71,7 +71,7 @@ RuneSequence CaseConverter::operator()(const RuneSequence& input) const {
                         } else {
                             converted.push_back(ch);
                         }
-                        if (ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z') {
+                        if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')) {
                             at_word_start = false;
                         }
                     }
