@@ -4,6 +4,8 @@
 [![CMake](https://img.shields.io/badge/CMake-3.20%2B-green.svg)](https://cmake.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/yourusername/rune-caster)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-brightgreen.svg)](https://yourusername.github.io/rune-caster)
+[![Build Status](https://github.com/yourusername/rune-caster/workflows/📚%20Documentation/badge.svg)](https://github.com/yourusername/rune-caster/actions)
 
 <div align="center">
   <img src="https://github.com/crlotwhite/rune-caster/blob/main/docs/logo.png?raw=true" width="480" height="480"/>
@@ -118,6 +120,29 @@ ninja
 ```bash
 sudo cmake --install .
 ```
+
+## 📚 문서
+
+### 🌐 온라인 문서
+- **[API Documentation](https://yourusername.github.io/rune-caster)**: Doxygen으로 생성된 상세한 API 문서
+- **[빠른 시작 가이드](QUICK_START.md)**: 프로젝트 시작을 위한 단계별 가이드
+
+### 📖 로컬 문서 생성
+
+```bash
+# 문서 생성 (Doxygen 필요)
+cmake -DRUNE_CASTER_ENABLE_DOCS=ON ..
+cmake --build . --target docs
+
+# 브라우저에서 열기
+open docs/html/index.html  # macOS
+xdg-open docs/html/index.html  # Linux
+start docs/html/index.html  # Windows
+```
+
+### 🤖 자동 배포
+- **GitHub Actions**: 코드 변경 시 자동으로 문서가 업데이트됩니다
+- **GitHub Pages**: `https://yourusername.github.io/rune-caster`에서 접근 가능
 
 ## 📖 사용 예제
 
