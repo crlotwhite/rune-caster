@@ -1,0 +1,203 @@
+name: 📚 Documentation
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'include/**'
+      - 'src/**'
+      - 'docs/**'
+      - 'Doxyfile'
+      - 'README.md'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'include/**'
+      - 'src/**'
+      - 'docs/**'
+      - 'Doxyfile'
+      - 'README.md'
+  workflow_dispatch:  # 수동 실행 허용
+
+# GitHub Pages에 배포하기 위한 권한 설정
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 중복 실행 방지
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # Doxygen 문서 생성
+  build-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 전체 히스토리 가져오기 (버전 정보용)
+
+    - name: 🔧 Setup C++ environment
+      uses: aminya/setup-cpp@v1
+      with:
+        compiler: gcc
+        cmake: true
+        doxygen: true
+        
+    - name: 📋 Install additional dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          graphviz \
+          plantuml \
+          mscgen
+        
+    - name: 📊 Verify Doxygen installation
+      run: |
+        doxygen --version
+        dot -V || echo "Graphviz dot not found"
+        
+    - name: 📝 Configure CMake with documentation
+      run: |
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DRUNE_CASTER_ENABLE_DOCS=ON \
+          -DRUNE_CASTER_ENABLE_TESTS=OFF \
+          -DRUNE_CASTER_ENABLE_EXAMPLES=OFF
+          
+    - name: 🏗️ Build documentation
+      run: |
+        # CMake 타겟 사용 (build/docs/html에 생성됨)
+        if cmake --build build --target docs 2>/dev/null; then
+          echo "✅ Documentation built using CMake target"
+          # CMake는 build/docs/html에 생성하므로 docs/api/로 복사
+          mkdir -p docs/api
+          cp -r build/docs/html docs/api/
+        else
+          echo "📝 Building documentation directly with Doxygen"
+          doxygen Doxyfile
+        fi
+        
+    - name: 📂 Verify documentation output
+      run: |
+        if [ -d "docs/api/html" ]; then
+          echo "✅ Documentation generated successfully"
+          ls -la docs/api/html/
+          echo "Total files: $(find docs/api/html -type f | wc -l)"
+        else
+          echo "❌ Documentation not found in expected location"
+          echo "Looking for documentation in alternative locations..."
+          find . -name "html" -type d 2>/dev/null || echo "No html directories found"
+          exit 1
+        fi
+        
+    - name: 📄 Create index redirect
+      run: |
+        # GitHub Pages 루트에서 자동으로 문서로 리다이렉트
+        cat > docs/api/html/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html lang="ko">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Rune Caster Documentation</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    margin: 0;
+                    padding: 0;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    color: white;
+                }
+                .container {
+                    text-align: center;
+                    background: rgba(255, 255, 255, 0.1);
+                    padding: 2rem;
+                    border-radius: 15px;
+                    backdrop-filter: blur(10px);
+                    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+                }
+                h1 { margin-bottom: 1rem; font-size: 2.5rem; }
+                p { margin-bottom: 2rem; font-size: 1.2rem; opacity: 0.9; }
+                .btn {
+                    display: inline-block;
+                    padding: 12px 24px;
+                    background: rgba(255, 255, 255, 0.2);
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 25px;
+                    transition: all 0.3s ease;
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                }
+                .btn:hover {
+                    background: rgba(255, 255, 255, 0.3);
+                    transform: translateY(-2px);
+                }
+                .loader {
+                    border: 2px solid rgba(255, 255, 255, 0.3);
+                    border-radius: 50%;
+                    border-top: 2px solid white;
+                    width: 20px;
+                    height: 20px;
+                    animation: spin 1s linear infinite;
+                    display: inline-block;
+                    margin-left: 10px;
+                }
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🧙‍♂️ Rune Caster</h1>
+                <p>Modern C++ Text Processing Framework</p>
+                <a href="./index.html" class="btn" id="redirectBtn">
+                    문서 보기 <span class="loader"></span>
+                </a>
+                <script>
+                    // JavaScript를 사용한 즉시 리다이렉트
+                    setTimeout(() => {
+                        window.location.href = './index.html';
+                    }, 2000);
+                </script>
+            </div>
+        </body>
+        </html>
+        EOF
+        
+    - name: 📤 Upload documentation artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: docs/api/html
+
+  # GitHub Pages 배포 (main/master 브랜치에서만)
+  deploy-docs:
+    needs: build-docs
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+      
+    steps:
+    - name: 🚀 Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+      
+    - name: 📢 Post deployment info
+      run: |
+        echo "✅ Documentation deployed successfully!"
+        echo "🌐 URL: ${{ steps.deployment.outputs.page_url }}"
+        echo "📚 View your documentation at: ${{ steps.deployment.outputs.page_url }}" 
