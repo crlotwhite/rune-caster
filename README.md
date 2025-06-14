@@ -5,6 +5,10 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/yourusername/rune-caster)
 
+<div align="center">
+  <img src="https://github.com/crlotwhite/rune-caster/blob/main/docs/logo.png?raw=true" width="480" height="480"/>
+</div>
+
 > **Modern C++ Text Processing Framework**
 >
 > STL에서 영감을 받은 직관적이고 고성능의 다국어 텍스트 처리 및 언어 간 변환 프레임워크
@@ -113,71 +117,6 @@ ninja
 
 ```bash
 sudo cmake --install .
-```
-
-## 🧪 테스트 방법
-
-### ⚠️ 현재 빌드 상태
-
-**현재 프로젝트는 컴파일 오류로 인해 빌드되지 않습니다.** 다음 명령어로 오류를 확인할 수 있습니다:
-
-```powershell
-# Windows에서 빌드 테스트
-mkdir build
-cd build
-cmake ..
-cmake --build . --config Release
-```
-
-**예상 오류들:**
-- C4819: UTF-8 인코딩 경고
-- C2059: 구문 오류 (enum 정의)
-- C2653: 클래스/네임스페이스 참조 오류
-
-### 📋 수동 검증 방법
-
-현재 빌드는 불가능하지만, 다음과 같이 프로젝트 상태를 확인할 수 있습니다:
-
-```powershell
-# 1. CMake 설정 테스트
-cmake ..
-# 성공: "Configuring done", "Generating done" 메시지 확인
-
-# 2. 프로젝트 구조 확인
-ls ../include/rune_caster/
-# 예상: rune.hpp, rune_sequence.hpp, unicode.hpp 등
-
-# 3. 컴파일러 호환성 확인
-where cl  # MSVC 컴파일러
-cmake --version  # 3.20+ 확인
-```
-
-### 🔧 개발자 테스트 (오류 디버깅)
-
-```powershell
-# 상세한 빌드 로그 확인
-cmake --build . --config Debug --verbose
-
-# 특정 파일만 컴파일 테스트
-cl /std:c++20 /I../include ../src/rune/rune.cpp
-```
-
-### ✅ 향후 테스트 계획
-
-컴파일 문제 해결 후 다음 테스트가 가능해집니다:
-
-```bash
-# 예제 실행
-./examples/basic_usage
-./examples/sequence_usage
-
-# 단위 테스트
-cmake -DRUNE_CASTER_ENABLE_TESTS=ON ..
-make && ctest --verbose
-
-# 성능 벤치마크
-cmake -DRUNE_CASTER_ENABLE_BENCHMARKS=ON ..
-make && ./tests/benchmarks
 ```
 
 ## 📖 사용 예제
@@ -347,12 +286,6 @@ _setmode(_fileno(stdout), _O_U8TEXT);
 - **STL**: 설계 철학과 API 패턴에 영감
 - **ICU**: 강력한 유니코드 지원
 - **C++20**: 현대적인 언어 기능들
-
-## 📞 연락처
-
-- **Issue**: [GitHub Issues](https://github.com/yourusername/rune-caster/issues)
-- **Discussion**: [GitHub Discussions](https://github.com/yourusername/rune-caster/discussions)
-- **Email**: your.email@example.com
 
 ---
 
