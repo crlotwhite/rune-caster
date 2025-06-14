@@ -59,19 +59,18 @@ endfunction()
 
 # fmt 라이브러리 (포맷팅) - C++20 consteval 호환성을 위한 안정 버전
 if(RUNE_CASTER_ENABLE_FMT)
-    fetch_dependency(fmt "https://github.com/fmtlib/fmt.git" "8.1.1")
+    fetch_dependency(fmt "https://github.com/fmtlib/fmt.git" "10.2.1")
 endif()
 
 # spdlog 라이브러리 (로깅) - fmt 8.x와 완전 호환되는 안정 버전
 if(RUNE_CASTER_ENABLE_SPDLOG)
-    # spdlog 설정: external fmt 사용, 컴파일 시간 최적화
+    # spdlog 설정: external fmt 사용 (SPDLOG_FMT_EXTERNAL_HO와 상호 배타적)
     set(SPDLOG_FMT_EXTERNAL ON CACHE BOOL "Use external fmt library")
-    set(SPDLOG_FMT_EXTERNAL_HO ON CACHE BOOL "Use external fmt header-only mode")
     set(SPDLOG_INSTALL OFF CACHE BOOL "Disable spdlog install")
     set(SPDLOG_BUILD_EXAMPLE OFF CACHE BOOL "Disable spdlog examples")
     set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "Disable spdlog tests")
     
-    fetch_dependency(spdlog "https://github.com/gabime/spdlog.git" "v1.10.0")
+    fetch_dependency(spdlog "https://github.com/gabime/spdlog.git" "v1.12.0")
 endif()
 
 # === 시스템 의존성 (복잡한 라이브러리들) ===
