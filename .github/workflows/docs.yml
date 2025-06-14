@@ -35,7 +35,7 @@ jobs:
   # Doxygen 문서 생성
   build-docs:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: 📥 Checkout repository
       uses: actions/checkout@v4
@@ -48,7 +48,7 @@ jobs:
         compiler: gcc
         cmake: true
         doxygen: true
-        
+
     - name: 📋 Install additional dependencies
       run: |
         sudo apt-get update
@@ -56,12 +56,12 @@ jobs:
           graphviz \
           plantuml \
           mscgen
-        
+
     - name: 📊 Verify Doxygen installation
       run: |
         doxygen --version
         dot -V || echo "Graphviz dot not found"
-        
+
     - name: 📝 Configure CMake with documentation
       run: |
         cmake -B build \
@@ -69,43 +69,64 @@ jobs:
           -DRUNE_CASTER_ENABLE_DOCS=ON \
           -DRUNE_CASTER_ENABLE_TESTS=OFF \
           -DRUNE_CASTER_ENABLE_EXAMPLES=OFF
-          
+
     - name: 🏗️ Build documentation
       run: |
-        # CMake 타겟 사용 (build/docs/html에 생성됨)
+        # 먼저 CMake 타겟으로 시도
         if cmake --build build --target docs 2>/dev/null; then
           echo "✅ Documentation built using CMake target"
-          # CMake는 build/docs/html에 생성하므로 docs/api/로 복사
-          mkdir -p docs/api
-          cp -r build/docs/html docs/api/
+          DOC_SOURCE="build/docs/html"
         else
           echo "📝 Building documentation directly with Doxygen"
           doxygen Doxyfile
+          DOC_SOURCE="docs/api/html"
         fi
-        
+
+        # 문서 출력 디렉토리 준비
+        mkdir -p docs/output
+
+        # 생성된 문서를 표준 위치로 복사
+        if [ -d "$DOC_SOURCE" ]; then
+          cp -r "$DOC_SOURCE"/* docs/output/
+          echo "DOC_SOURCE=$DOC_SOURCE" >> $GITHUB_ENV
+        else
+          echo "❌ Documentation source not found: $DOC_SOURCE"
+          exit 1
+        fi
+
     - name: 📂 Verify documentation output
       run: |
-        if [ -d "docs/api/html" ]; then
+        if [ -d "docs/output" ] && [ -f "docs/output/index.html" ]; then
           echo "✅ Documentation generated successfully"
-          ls -la docs/api/html/
-          echo "Total files: $(find docs/api/html -type f | wc -l)"
+          ls -la docs/output/
+          echo "Total files: $(find docs/output -type f | wc -l)"
+          echo "Main page size: $(stat -c%s docs/output/index.html) bytes"
         else
           echo "❌ Documentation not found in expected location"
           echo "Looking for documentation in alternative locations..."
-          find . -name "html" -type d 2>/dev/null || echo "No html directories found"
+          find . -name "index.html" -type f 2>/dev/null | head -10
           exit 1
         fi
-        
-    - name: 📄 Create index redirect
+
+    - name: 🎨 Add custom styling and metadata
       run: |
-        # GitHub Pages 루트에서 자동으로 문서로 리다이렉트
-        cat > docs/api/html/index.html << 'EOF'
+        # 커스텀 CSS가 있다면 복사
+        if [ -f "docs/style.css" ]; then
+          cp docs/style.css docs/output/
+          echo "✅ Custom CSS added"
+        fi
+
+        # 프로젝트 정보를 담은 .nojekyll 파일 생성 (GitHub Pages용)
+        touch docs/output/.nojekyll
+
+        # 루트 리다이렉트 파일 생성 (API 문서와 별도)
+        cat > docs/output/home.html << 'EOF'
         <!DOCTYPE html>
         <html lang="ko">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Rune Caster Documentation</title>
+            <title>Rune Caster - Modern C++ Text Processing Framework</title>
             <style>
                 body {
                     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -121,83 +142,97 @@ jobs:
                 .container {
                     text-align: center;
                     background: rgba(255, 255, 255, 0.1);
-                    padding: 2rem;
-                    border-radius: 15px;
-                    backdrop-filter: blur(10px);
+                    padding: 3rem;
+                    border-radius: 20px;
+                    backdrop-filter: blur(15px);
                     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+                    border: 1px solid rgba(255, 255, 255, 0.18);
+                    max-width: 600px;
                 }
-                h1 { margin-bottom: 1rem; font-size: 2.5rem; }
-                p { margin-bottom: 2rem; font-size: 1.2rem; opacity: 0.9; }
+                h1 {
+                    margin-bottom: 1rem;
+                    font-size: 3rem;
+                    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                }
+                p {
+                    margin-bottom: 2rem;
+                    font-size: 1.3rem;
+                    opacity: 0.9;
+                    line-height: 1.6;
+                }
                 .btn {
                     display: inline-block;
-                    padding: 12px 24px;
+                    padding: 15px 30px;
+                    margin: 0 10px;
                     background: rgba(255, 255, 255, 0.2);
                     color: white;
                     text-decoration: none;
-                    border-radius: 25px;
+                    border-radius: 30px;
                     transition: all 0.3s ease;
-                    border: 1px solid rgba(255, 255, 255, 0.3);
+                    border: 2px solid rgba(255, 255, 255, 0.3);
+                    font-weight: 500;
                 }
                 .btn:hover {
                     background: rgba(255, 255, 255, 0.3);
-                    transform: translateY(-2px);
+                    transform: translateY(-3px);
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
                 }
-                .loader {
-                    border: 2px solid rgba(255, 255, 255, 0.3);
-                    border-radius: 50%;
-                    border-top: 2px solid white;
-                    width: 20px;
-                    height: 20px;
-                    animation: spin 1s linear infinite;
-                    display: inline-block;
-                    margin-left: 10px;
+                .btn-primary {
+                    background: rgba(255, 255, 255, 0.9);
+                    color: #764ba2;
+                    border: 2px solid rgba(255, 255, 255, 0.9);
                 }
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
+                .btn-primary:hover {
+                    background: white;
+                    color: #667eea;
+                }
+                .links {
+                    margin-top: 2rem;
                 }
             </style>
         </head>
         <body>
             <div class="container">
                 <h1>🧙‍♂️ Rune Caster</h1>
-                <p>Modern C++ Text Processing Framework</p>
-                <a href="./index.html" class="btn" id="redirectBtn">
-                    문서 보기 <span class="loader"></span>
-                </a>
-                <script>
-                    // JavaScript를 사용한 즉시 리다이렉트
-                    setTimeout(() => {
-                        window.location.href = './index.html';
-                    }, 2000);
-                </script>
+                <p>Modern C++ Text Processing Framework<br/>
+                   <small>STL과 완벽 호환되는 텍스트 처리 라이브러리</small></p>
+                <div class="links">
+                    <a href="./index.html" class="btn btn-primary">📖 API 문서</a>
+                    <a href="https://github.com/crlotwhite/rune-caster" class="btn">💻 GitHub</a>
+                </div>
             </div>
         </body>
         </html>
         EOF
-        
+
+        echo "✅ Custom styling and metadata added"
+
     - name: 📤 Upload documentation artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: docs/api/html
+        path: docs/output
 
   # GitHub Pages 배포 (main/master 브랜치에서만)
   deploy-docs:
     needs: build-docs
     if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    
+
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-      
+
     steps:
     - name: 🚀 Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
-      
+
     - name: 📢 Post deployment info
       run: |
         echo "✅ Documentation deployed successfully!"
-        echo "🌐 URL: ${{ steps.deployment.outputs.page_url }}"
-        echo "📚 View your documentation at: ${{ steps.deployment.outputs.page_url }}" 
+        echo "🌐 API 문서 URL: ${{ steps.deployment.outputs.page_url }}"
+        echo "🏠 메인 페이지: ${{ steps.deployment.outputs.page_url }}home.html"
+        echo ""
+        echo "📚 사용 방법:"
+        echo "  • API 문서: ${{ steps.deployment.outputs.page_url }}"
+        echo "  • 프로젝트 홈: ${{ steps.deployment.outputs.page_url }}home.html"
