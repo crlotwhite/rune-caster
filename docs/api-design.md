@@ -444,285 +444,184 @@ concept Stackable = NoAlloc<T> && LowLatency<T>;
 
 ### 5.1 기본 Spell들
 ```cpp
-export module rune_caster.spell;
-
-import rune_caster.concepts;
-import rune_caster.rune;
-
-namespace spells {
+// 현재 구현: rune_caster::spell namespace 사용
+namespace rune_caster {
+namespace spell {
 
 // 공백 정제
-export class CleanWhitespace {
-public:
-    using input_type = RuneView;
-    using output_type = RuneString;
+/**
+ * @brief Normalize whitespace (collapse multiple spaces, optionally trim)
+ */
+inline auto normalize_whitespace(bool collapse_multiple = true, bool trim_edges = true) {
+    return core::WhitespaceNormalizer{collapse_multiple, trim_edges};
+}
 
-    struct Options {
-        bool collapse_whitespace = true;
-        bool trim_leading = true;
-        bool trim_trailing = true;
-        bool normalize_newlines = true;
-    };
-
-    explicit CleanWhitespace(Options opts = {}) : options_(opts) {}
-
-    RuneString process(RuneView input) const;
-
-    // Ranges 지원
-    template<runes::RuneRange R>
-    auto operator()(R&& range) const {
-        return process(RuneView(range));
-    }
-
-private:
-    Options options_;
-};
-
-// 유니코드 정규화
-export template<unicode::NormalizationForm Form = unicode::NormalizationForm::NFC>
-class NormalizeUnicode {
-public:
-    using input_type = RuneView;
-    using output_type = RuneString;
-
-    constexpr NormalizeUnicode() = default;
-
-    RuneString process(RuneView input) const;
-
-    template<runes::RuneRange R>
-    auto operator()(R&& range) const {
-        return process(RuneView(range));
-    }
-};
+/**
+ * @brief Trim leading and trailing whitespace
+ */
+inline auto trim() {
+    return core::TrimEdges{};
+}
 
 // 대소문자 변환
-export class ChangeCase {
-public:
-    enum class Mode { Lower, Upper, Title, Fold };
+/**
+ * @brief Convert text to lowercase
+ */
+inline auto lowercase() {
+    return core::CaseConverter{core::CaseConverter::CaseType::Lower};
+}
 
-    using input_type = RuneView;
-    using output_type = RuneString;
+/**
+ * @brief Convert text to uppercase
+ */
+inline auto uppercase() {
+    return core::CaseConverter{core::CaseConverter::CaseType::Upper};
+}
 
-    explicit ChangeCase(Mode mode, language::Code locale = language::Code::Unknown)
-        : mode_(mode), locale_(locale) {}
+/**
+ * @brief Convert text to title case
+ */
+inline auto titlecase() {
+    return core::CaseConverter{core::CaseConverter::CaseType::Title};
+}
 
-    RuneString process(RuneView input) const;
+// 유니코드 정규화
+/**
+ * @brief Apply Unicode NFC normalization
+ */
+inline auto unicode_nfc() {
+    return core::UnicodeNormalizer{unicode::NormalizationForm::NFC};
+}
 
-    // 정적 편의 함수들
-    static ChangeCase to_lower(language::Code locale = language::Code::Unknown) {
-        return ChangeCase(Mode::Lower, locale);
-    }
+/**
+ * @brief Apply Unicode NFD normalization
+ */
+inline auto unicode_nfd() {
+    return core::UnicodeNormalizer{unicode::NormalizationForm::NFD};
+}
 
-    static ChangeCase to_upper(language::Code locale = language::Code::Unknown) {
-        return ChangeCase(Mode::Upper, locale);
-    }
+/**
+ * @brief Apply Unicode NFKC normalization
+ */
+inline auto unicode_nfkc() {
+    return core::UnicodeNormalizer{unicode::NormalizationForm::NFKC};
+}
 
-    static ChangeCase to_title(language::Code locale = language::Code::Unknown) {
-        return ChangeCase(Mode::Title, locale);
-    }
-
-    template<runes::RuneRange R>
-    auto operator()(R&& range) const {
-        return process(RuneView(range));
-    }
-
-private:
-    Mode mode_;
-    language::Code locale_;
-};
+/**
+ * @brief Apply Unicode NFKD normalization
+ */
+inline auto unicode_nfkd() {
+    return core::UnicodeNormalizer{unicode::NormalizationForm::NFKD};
+}
 
 // 언어 감지
-export class DetectLanguage {
-public:
-    using input_type = RuneView;
-    using output_type = language::DetectionResult;
-
-    struct Options {
-        std::size_t min_text_length = 10;
-        double confidence_threshold = 0.7;
-        bool detect_mixed_languages = false;
-    };
-
-    explicit DetectLanguage(Options opts = {}) : options_(opts) {}
-
-    language::DetectionResult process(RuneView input) const;
-
-    // 다중 언어 감지
-    std::vector<language::DetectionResult> detect_all(RuneView input) const;
-
-    template<runes::RuneRange R>
-    auto operator()(R&& range) const {
-        return process(RuneView(range));
-    }
-
-private:
-    Options options_;
-};
+/**
+ * @brief Detect language of text
+ */
+inline auto detect_language() {
+    return language::LanguageDetector{};
+}
 
 // 필터링
-export template<typename Predicate>
-class Filter {
-public:
-    using input_type = RuneView;
-    using output_type = RuneString;
-
-    explicit Filter(Predicate pred) : predicate_(std::move(pred)) {}
-
-    RuneString process(RuneView input) const {
-        return input
-            | std::views::filter(predicate_)
-            | std::ranges::to<RuneString>();
-    }
-
-    template<runes::RuneRange R>
-    auto operator()(R&& range) const {
-        return process(RuneView(range));
-    }
-
-private:
-    Predicate predicate_;
-};
-
-// 팩토리 함수들
-export auto clean_whitespace(CleanWhitespace::Options opts = {}) {
-    return CleanWhitespace(opts);
+/**
+ * @brief Remove punctuation characters
+ */
+inline auto remove_punctuation() {
+    return filter::PunctuationFilter{};
 }
 
-export auto normalize_unicode() {
-    return NormalizeUnicode<unicode::NormalizationForm::NFC>();
+// 토큰화
+/**
+ * @brief Tokenize text by whitespace
+ */
+inline auto tokenize() {
+    return core::WhitespaceTokenizer{};
 }
 
-export template<unicode::NormalizationForm Form>
-auto normalize_unicode() {
-    return NormalizeUnicode<Form>();
+// 조합 spell
+/**
+ * @brief Standard text cleanup: normalize whitespace + trim + lowercase
+ */
+inline auto cleanup() {
+    return TextCleanup{};
 }
 
-export auto to_lower(language::Code locale = language::Code::Unknown) {
-    return ChangeCase::to_lower(locale);
+/**
+ * @brief Search preprocessing: cleanup + remove punctuation + unicode NFC
+ */
+inline auto search_preprocess() {
+    return SearchPreprocess{};
 }
 
-export auto to_upper(language::Code locale = language::Code::Unknown) {
-    return ChangeCase::to_upper(locale);
+// 사용자 정의 spell
+/**
+ * @brief Create a custom spell from a lambda function
+ */
+template<typename Func>
+auto custom(std::string name, std::string description, Func&& func) {
+    return CustomSpell<std::decay_t<Func>>{
+        std::move(name),
+        std::move(description),
+        std::forward<Func>(func)
+    };
 }
 
-export auto detect_language(DetectLanguage::Options opts = {}) {
-    return DetectLanguage(opts);
-}
-
-export template<typename Predicate>
-auto filter(Predicate pred) {
-    return Filter(std::move(pred));
-}
-
-// 편의 필터들
-export auto remove_punctuation() {
-    return filter([](const Rune& r) { return !r.is_punctuation(); });
-}
-
-export auto keep_letters_only() {
-    return filter([](const Rune& r) { return r.is_letter(); });
-}
-
-export auto remove_whitespace() {
-    return filter([](const Rune& r) { return !r.is_whitespace(); });
-}
-
-}
+} // namespace spell
+} // namespace rune_caster
 ```
 
-### 5.2 Spell 조합 API
+### 5.2 사용법 예제
 ```cpp
-namespace spells {
+// 현재 API에 맞춘 사용법
+#include <rune_caster/spell.hpp>
+using namespace rune_caster;
 
-// Spell 파이프라인
-export template<runes::Spell... Spells>
-class Pipeline {
-public:
-    explicit Pipeline(Spells... spells) : spells_(std::move(spells)...) {}
+// 기본 사용법 - 파이프 연산자
+auto result = text | spell::lowercase() | spell::trim();
 
-    template<runes::RuneRange Input>
-    auto process(Input&& input) const {
-        return std::apply([&input](const auto&... spells) {
-            return (input | ... | spells);
-        }, spells_);
-    }
+// 복잡한 변환 체이닝
+auto processed = input
+    | spell::normalize_whitespace()
+    | spell::unicode_nfc()
+    | spell::lowercase()
+    | spell::remove_punctuation();
 
-    template<runes::RuneRange R>
-    auto operator()(R&& range) const {
-        return process(std::forward<R>(range));
-    }
+// Caster와 함께 사용
+auto result = make_caster(text)
+    .cast(spell::normalize_whitespace())
+    .cast(spell::trim())
+    .cast(spell::lowercase())
+    .result();
 
-    // 새로운 Spell 추가
-    template<runes::Spell NewSpell>
-    auto then(NewSpell spell) const {
-        return std::apply([spell](const auto&... existing) {
-            return Pipeline(existing..., spell);
-        }, spells_);
-    }
+// 조합된 spell 사용
+auto cleaned = text | spell::cleanup();
 
-private:
-    std::tuple<Spells...> spells_;
-};
+// 검색 전처리
+auto preprocessed = text | spell::search_preprocess();
 
-// 조건부 Spell
-export template<typename Predicate, runes::Spell TrueSpell, runes::Spell FalseSpell>
-class Conditional {
-public:
-    Conditional(Predicate pred, TrueSpell true_spell, FalseSpell false_spell)
-        : predicate_(std::move(pred))
-        , true_spell_(std::move(true_spell))
-        , false_spell_(std::move(false_spell)) {}
-
-    template<runes::RuneRange Input>
-    auto process(Input&& input) const {
-        if (predicate_(input)) {
-            return true_spell_(std::forward<Input>(input));
-        } else {
-            return false_spell_(std::forward<Input>(input));
+// 사용자 정의 spell
+auto reverse_spell = spell::custom("Reverse", "Reverse text",
+    [](const RuneSequence& input) {
+        RuneSequence result;
+        for (auto it = input.rbegin(); it != input.rend(); ++it) {
+            result.push_back(*it);
         }
-    }
+        return result;
+    });
 
-    template<runes::RuneRange R>
-    auto operator()(R&& range) const {
-        return process(std::forward<R>(range));
-    }
+auto reversed = input | reverse_spell;
 
-private:
-    Predicate predicate_;
-    TrueSpell true_spell_;
-    FalseSpell false_spell_;
-};
+// Unicode 정규화 변형들
+auto nfc_text = input | spell::unicode_nfc();
+auto nfd_text = input | spell::unicode_nfd();
+auto nfkc_text = input | spell::unicode_nfkc();
+auto nfkd_text = input | spell::unicode_nfkd();
 
-// 팩토리 함수들
-export template<runes::Spell... Spells>
-auto make_pipeline(Spells... spells) {
-    return Pipeline(std::move(spells)...);
-}
+// 언어 감지와 함께 사용
+auto detected = input | spell::detect_language();
 
-export template<typename Predicate, runes::Spell TrueSpell, runes::Spell FalseSpell>
-auto make_conditional(Predicate pred, TrueSpell true_spell, FalseSpell false_spell) {
-    return Conditional(std::move(pred), std::move(true_spell), std::move(false_spell));
-}
-
-// 자주 사용되는 파이프라인들
-export auto standard_cleanup() {
-    return make_pipeline(
-        clean_whitespace(),
-        normalize_unicode(),
-        to_lower()
-    );
-}
-
-export auto aggressive_cleanup() {
-    return make_pipeline(
-        clean_whitespace(),
-        normalize_unicode(),
-        remove_punctuation(),
-        to_lower()
-    );
-}
-
-}
+// 토큰화
+auto tokens = input | spell::tokenize();
 ```
 
 ## 6. Caster 실행 API

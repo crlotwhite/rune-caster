@@ -56,13 +56,13 @@ for (const auto& rune : text) {
 
 // Factory 함수를 통한 Spell 생성
 auto normalized = text
-    | spell::whitespace()      // 공백 정규화
-    | spell::lowercase()       // 소문자 변환
-    | spell::unicode_nfc();    // Unicode 정규화
+    | spell::normalize_whitespace()      // 공백 정규화
+    | spell::lowercase()                 // 소문자 변환
+    | spell::unicode_nfc();              // Unicode 정규화
 
 // Spell 조합
 auto complex_spell = spell::compose(
-    spell::whitespace(true, true),
+    spell::normalize_whitespace(true, true),
     spell::lowercase()
 );
 ```
@@ -72,17 +72,20 @@ auto complex_spell = spell::compose(
 
 ```cpp
 #include <rune_caster/caster.hpp>
+#include <rune_caster/spell.hpp>
 
-// Fluent interface 스타일
+using namespace rune_caster;
+
+// Caster 스타일 파이프라인
 auto result = make_caster(input_text)
-    .cast(spell::whitespace())
+    .cast(spell::normalize_whitespace())
     .cast(spell::lowercase())
     .cast(spell::unicode_nfc())
     .result();
 
-// Pipe operator 스타일
+// Pipe operator 스타일 (더 간단함)
 auto result2 = input_text
-    | spell::whitespace()
+    | spell::normalize_whitespace()
     | spell::lowercase();
 ```
 
@@ -104,12 +107,19 @@ using namespace rune_caster;
 ```cpp
 int main() {
     // 다국어 텍스트 생성
-    auto text = RuneString::from_utf8("  Hello, 안녕하세요! こんにちは  ");
+    auto text = RuneSequence::from_utf8("  Hello, 안녕하세요! こんにちは  ");
 
-    // 텍스트 정제
+    // 텍스트 정제 (현재 API 사용)
     auto cleaned = text
-        | spell::whitespace()     // 공백 정규화
-        | spell::lowercase();     // 소문자 변환
+        | spell::normalize_whitespace()  // 공백 정규화
+        | spell::lowercase();            // 소문자 변환
+
+    // 또는 Caster 사용
+    auto result = make_caster(text)
+        .cast(spell::normalize_whitespace())
+        .cast(spell::trim())
+        .cast(spell::lowercase())
+        .result();
 
     // 결과 출력
     std::cout << "원본: " << text.to_utf8() << std::endl;
