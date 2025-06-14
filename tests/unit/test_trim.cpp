@@ -6,21 +6,21 @@ using namespace rune_caster;
 
 TEST(TrimEdgesTest, BasicTrim) {
     auto seq = RuneSequence::from_utf8("  Hello World  ");
-    spell::TrimEdges trim;
-    auto result = trim(seq);
+    auto trim_spell = spell::trim();
+    auto result = trim_spell(seq);
     EXPECT_EQ(result.to_utf8(), "Hello World");
 }
 
 TEST(TrimEdgesTest, NoWhitespace) {
     auto seq = RuneSequence::from_utf8("Hello");
-    spell::TrimEdges trim;
-    auto result = trim(seq);
+    auto trim_spell = spell::trim();
+    auto result = trim_spell(seq);
     EXPECT_EQ(result.to_utf8(), "Hello");
 }
 
 TEST(TrimEdgesTest, AllWhitespace) {
     auto seq = RuneSequence::from_utf8("   \t\n  ");
-    spell::TrimEdges trim;
-    auto result = trim(seq);
+    auto trim_spell = spell::trim();
+    auto result = trim_spell(seq);
     EXPECT_TRUE(result.empty());
 }

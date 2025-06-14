@@ -18,173 +18,133 @@ protected:
 // === WhitespaceNormalizer 테스트 ===
 
 TEST_F(SpellTest, WhitespaceNormalizerBasic) {
-    spell::WhitespaceNormalizer normalizer;
-    
     auto input = RuneSequence::from_utf8("  Hello   World  ");
-    auto result = normalizer(input);
-    
+    auto result = input | spell::normalize_whitespace();
+
     EXPECT_EQ(result.to_utf8(), "Hello World");
     EXPECT_EQ(result.size(), 11);
 }
 
 TEST_F(SpellTest, WhitespaceNormalizerEmpty) {
-    spell::WhitespaceNormalizer normalizer;
-    
     auto input = RuneSequence::from_utf8("");
-    auto result = normalizer(input);
-    
+    auto result = input | spell::normalize_whitespace();
+
     EXPECT_TRUE(result.empty());
     EXPECT_EQ(result.to_utf8(), "");
 }
 
 TEST_F(SpellTest, WhitespaceNormalizerWhitespaceOnly) {
-    spell::WhitespaceNormalizer normalizer;
-    
     auto input = RuneSequence::from_utf8("   \t\n   ");
-    auto result = normalizer(input);
-    
+    auto result = input | spell::normalize_whitespace();
+
     EXPECT_TRUE(result.empty());
     EXPECT_EQ(result.to_utf8(), "");
 }
 
 TEST_F(SpellTest, WhitespaceNormalizerNoTrim) {
-    spell::WhitespaceNormalizer normalizer(true, false);  // collapse but no trim
-    
     auto input = RuneSequence::from_utf8("  Hello   World  ");
-    auto result = normalizer(input);
-    
+    auto result = input | spell::normalize_whitespace(true, false);  // collapse but no trim
+
     EXPECT_EQ(result.to_utf8(), " Hello World ");
 }
 
 TEST_F(SpellTest, WhitespaceNormalizerNoCollapse) {
-    spell::WhitespaceNormalizer normalizer(false, true);  // trim but no collapse
-    
     auto input = RuneSequence::from_utf8("  Hello   World  ");
-    auto result = normalizer(input);
-    
+    auto result = input | spell::normalize_whitespace(false, true);  // trim but no collapse
+
     EXPECT_EQ(result.to_utf8(), "Hello   World");
 }
 
 TEST_F(SpellTest, WhitespaceNormalizerTabsAndNewlines) {
-    spell::WhitespaceNormalizer normalizer;
-    
     auto input = RuneSequence::from_utf8("\t\tHello\n\nWorld\r\n");
-    auto result = normalizer(input);
-    
+    auto result = input | spell::normalize_whitespace();
+
     EXPECT_EQ(result.to_utf8(), "Hello World");
 }
 
 TEST_F(SpellTest, WhitespaceNormalizerMultilingual) {
-    spell::WhitespaceNormalizer normalizer;
-    
     auto input = RuneSequence::from_utf8("  안녕하세요   Hello\t\tこんにちは  ");
-    auto result = normalizer(input);
-    
+    auto result = input | spell::normalize_whitespace();
+
     EXPECT_EQ(result.to_utf8(), "안녕하세요 Hello こんにちは");
 }
 
 TEST_F(SpellTest, WhitespaceNormalizerSingleCharacter) {
-    spell::WhitespaceNormalizer normalizer;
-    
     auto input = RuneSequence::from_utf8("A");
-    auto result = normalizer(input);
-    
+    auto result = input | spell::normalize_whitespace();
+
     EXPECT_EQ(result.to_utf8(), "A");
     EXPECT_EQ(result.size(), 1);
 }
 
 TEST_F(SpellTest, WhitespaceNormalizerDescription) {
-    spell::WhitespaceNormalizer basic_normalizer;
+    auto basic_normalizer = spell::normalize_whitespace();
     EXPECT_EQ(basic_normalizer.description(), "Whitespace normalizer (collapse multiple, trim edges)");
-    
-    spell::WhitespaceNormalizer collapse_only(true, false);
+
+    auto collapse_only = spell::normalize_whitespace(true, false);
     EXPECT_EQ(collapse_only.description(), "Whitespace normalizer (collapse multiple)");
-    
-    spell::WhitespaceNormalizer trim_only(false, true);
+
+    auto trim_only = spell::normalize_whitespace(false, true);
     EXPECT_EQ(trim_only.description(), "Whitespace normalizer (trim edges)");
-}
-
-// === Helper 함수 테스트 ===
-
-TEST_F(SpellTest, CastSpellHelper) {
-    spell::WhitespaceNormalizer normalizer;
-    
-    std::string input = "  Hello   World  ";
-    std::string result = spell::cast_spell(input, normalizer);
-    
-    EXPECT_EQ(result, "Hello World");
-}
-
-TEST_F(SpellTest, CastSpellHelperEmpty) {
-    std::string empty_text = "";
-    spell::WhitespaceNormalizer normalizer;
-    std::string result = spell::cast_spell(empty_text, normalizer);
-    
-    EXPECT_EQ(result, "");
-    EXPECT_EQ(result.length(), 0);
 }
 
 // === CaseConverter Tests ===
 
 TEST_F(SpellTest, CaseConverterLowercase) {
-    std::string input = "Hello WORLD";
-    auto sequence = RuneSequence::from_utf8(input);
-    
-    spell::CaseConverter lower_converter(spell::CaseConverter::CaseType::Lower);
-    auto result = lower_converter(sequence);
-    
+    auto input = RuneSequence::from_utf8("Hello WORLD");
+    auto result = input | spell::lowercase();
+
+    auto spell_obj = spell::lowercase();
     EXPECT_EQ(result.to_utf8(), "hello world");
-    EXPECT_EQ(lower_converter.description(), "Lowercase Conversion");
+    EXPECT_EQ(spell_obj.description(), "Lowercase Conversion");
 }
 
 TEST_F(SpellTest, CaseConverterUppercase) {
-    std::string input = "Hello world";
-    auto sequence = RuneSequence::from_utf8(input);
-    
-    spell::CaseConverter upper_converter(spell::CaseConverter::CaseType::Upper);
-    auto result = upper_converter(sequence);
-    
+    auto input = RuneSequence::from_utf8("Hello world");
+    auto result = input | spell::uppercase();
+
+    auto spell_obj = spell::uppercase();
     EXPECT_EQ(result.to_utf8(), "HELLO WORLD");
-    EXPECT_EQ(upper_converter.description(), "Uppercase Conversion");
+    EXPECT_EQ(spell_obj.description(), "Uppercase Conversion");
 }
 
 TEST_F(SpellTest, CaseConverterTitlecase) {
-    std::string input = "hello world test";
-    auto sequence = RuneSequence::from_utf8(input);
-    
-    spell::CaseConverter title_converter(spell::CaseConverter::CaseType::Title);
-    auto result = title_converter(sequence);
-    
+    auto input = RuneSequence::from_utf8("hello world test");
+    auto result = input | spell::titlecase();
+
+    auto spell_obj = spell::titlecase();
     EXPECT_EQ(result.to_utf8(), "Hello World Test");
-    EXPECT_EQ(title_converter.description(), "Titlecase Conversion");
+    EXPECT_EQ(spell_obj.description(), "Titlecase Conversion");
 }
 
 TEST_F(SpellTest, CaseConverterEmpty) {
-    auto empty_sequence = RuneSequence::from_utf8("");
-    
-    spell::CaseConverter converter(spell::CaseConverter::CaseType::Lower);
-    auto result = converter(empty_sequence);
-    
+    auto input = RuneSequence::from_utf8("");
+    auto result = input | spell::lowercase();
+
     EXPECT_TRUE(result.empty());
     EXPECT_EQ(result.to_utf8(), "");
 }
 
 TEST_F(SpellTest, CaseConverterMultilingual) {
-    std::string input = "Hello 안녕하세요 こんにちは";
-    auto sequence = RuneSequence::from_utf8(input);
-    
-    spell::CaseConverter lower_converter(spell::CaseConverter::CaseType::Lower);
-    auto result = lower_converter(sequence);
-    
+    auto input = RuneSequence::from_utf8("Hello 안녕하세요 こんにちは");
+    auto result = input | spell::lowercase();
+
     // ASCII part should be lowercased, non-ASCII should remain unchanged
     EXPECT_EQ(result.to_utf8(), "hello 안녕하세요 こんにちは");
 }
 
-TEST_F(SpellTest, CaseConverterWithHelper) {
-    std::string input = "MiXeD CaSe TeXt";
-    
-    spell::CaseConverter converter(spell::CaseConverter::CaseType::Lower);
-    std::string result = spell::cast_spell(input, converter);
-    
-    EXPECT_EQ(result, "mixed case text");
-} 
+// === 체이닝 테스트 ===
+
+TEST_F(SpellTest, SpellChaining) {
+    auto input = RuneSequence::from_utf8("  Hello WORLD  ");
+    auto result = input | spell::normalize_whitespace() | spell::lowercase();
+
+    EXPECT_EQ(result.to_utf8(), "hello world");
+}
+
+TEST_F(SpellTest, TriplePipeChaining) {
+    auto input = RuneSequence::from_utf8("  Hello WORLD  ");
+    auto result = input | spell::trim() | spell::lowercase() | spell::uppercase();
+
+    EXPECT_EQ(result.to_utf8(), "HELLO WORLD");
+}
