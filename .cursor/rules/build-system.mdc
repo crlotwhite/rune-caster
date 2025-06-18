@@ -39,7 +39,7 @@ fetch_dependency(spdlog "https://github.com/gabime/spdlog.git" "v1.12.0")
 
 ### 의존성 관리 전략
 [docs/DEPENDENCIES.md](mdc:docs/DEPENDENCIES.md)에서 상세 정보:
-- **uni-algo** (권장): 경량 Unicode 라이브러리
+- **utf8cpp** (권장): 경량 Unicode 라이브러리
 - **시스템 ICU**: 고급 Unicode 기능
 - **FetchContent ICU**: 실험적 (Windows에서 복잡함)
 
@@ -49,7 +49,7 @@ fetch_dependency(spdlog "https://github.com/gabime/spdlog.git" "v1.12.0")
 ```cmake
 option(RUNE_CASTER_ENABLE_TESTS "Enable testing" ON)
 option(RUNE_CASTER_ENABLE_EXAMPLES "Enable examples" ON)
-option(RUNE_CASTER_USE_UNI_ALGO "Use uni-algo Unicode library" ON)
+option(RUNE_CASTER_USE_UTFCPP "Use utf8cpp Unicode library" ON)
 ```
 
 ### 고급 빌드
@@ -58,7 +58,7 @@ option(RUNE_CASTER_USE_UNI_ALGO "Use uni-algo Unicode library" ON)
 cmake .. -DRUNE_CASTER_ENABLE_FMT=OFF -DRUNE_CASTER_ENABLE_SPDLOG=OFF
 
 # 시스템 ICU 사용
-cmake .. -DRUNE_CASTER_USE_UNI_ALGO=OFF -DRUNE_CASTER_USE_SYSTEM_ICU=ON
+cmake .. -DRUNE_CASTER_USE_UTFCPP=OFF -DRUNE_CASTER_USE_SYSTEM_ICU=ON
 
 # 병렬 빌드 (권장)
 cmake --build . --config Release --parallel 4
@@ -73,7 +73,7 @@ cmake --build . --config Release --parallel 4
 
 ### ICU 의존성 문제 (해결됨)
 - **문제**: ICU 라이브러리 미설치
-- **해결**: uni-algo 기본 사용, 시스템 ICU는 선택적
+- **해결**: utf8cpp 기본 사용, 시스템 ICU는 선택적
 - **설정**: [CMakeLists.txt](mdc:CMakeLists.txt) line 89-113
 
 ### FetchContent 캐시 문제

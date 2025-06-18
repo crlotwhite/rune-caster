@@ -77,7 +77,7 @@ endif()
 
 # ICU 라이브러리 옵션 설정
 option(RUNE_CASTER_USE_FETCHCONTENT_ICU "Use FetchContent to download ICU instead of system ICU" OFF)
-option(RUNE_CASTER_USE_UNI_ALGO "Use uni-algo as a lightweight Unicode alternative to ICU" ON)
+option(RUNE_CASTER_USE_UTFCPP "Use utf8cpp as a lightweight Unicode alternative to ICU" ON)
 
 # ICU 라이브러리 (유니코드 지원) - 복잡하므로 시스템 설치 우선
 if(RUNE_CASTER_ENABLE_ICU AND RUNE_CASTER_USE_SYSTEM_ICU)
@@ -96,7 +96,7 @@ if(RUNE_CASTER_ENABLE_ICU AND RUNE_CASTER_USE_SYSTEM_ICU)
         message(STATUS "  Windows: vcpkg install icu")
         message(STATUS "  Ubuntu: sudo apt install libicu-dev")
         message(STATUS "  macOS: brew install icu4c")
-        message(STATUS "Alternative: Set RUNE_CASTER_USE_FETCHCONTENT_ICU=ON or RUNE_CASTER_USE_UNI_ALGO=ON")
+        message(STATUS "Alternative: Set RUNE_CASTER_USE_FETCHCONTENT_ICU=ON or RUNE_CASTER_USE_UTFCPP=ON")
     endif()
 endif()
 
@@ -128,25 +128,24 @@ if(RUNE_CASTER_ENABLE_ICU AND RUNE_CASTER_USE_FETCHCONTENT_ICU AND NOT ICU_FOUND
     endif()
 endif()
 
-# 대안: uni-algo 경량 Unicode 라이브러리 (권장)
-if(RUNE_CASTER_USE_UNI_ALGO AND NOT ICU_FOUND)
-    message(STATUS "🎯 Using uni-algo as lightweight Unicode alternative...")
+# 대안: utfcpp 경량 Unicode 라이브러리 (권장)
+if(RUNE_CASTER_USE_UTFCPP AND NOT ICU_FOUND)
+    message(STATUS "🎯 Using utf8cpp as lightweight Unicode alternative...")
 
     FetchContent_Declare(
-        uni-algo
-        GIT_REPOSITORY https://github.com/uni-algo/uni-algo.git
-        GIT_TAG        v1.2.0  # 최신 안정 버전
+        utf8cpp
+        GIT_REPOSITORY https://github.com/nemtrif/utfcpp.git
+        GIT_TAG        v4.0.6
         GIT_SHALLOW    ON
     )
 
-    # uni-algo 헤더 전용 모드 활성화 (컴파일 시간 단축)
-    set(UNI_ALGO_HEADER_ONLY ON CACHE INTERNAL "")
+    set(UTF8_INSTALL OFF CACHE INTERNAL "")
 
-    FetchContent_MakeAvailable(uni-algo)
+    FetchContent_MakeAvailable(utf8cpp)
 
-    if(TARGET uni-algo::uni-algo)
-        set(UNI_ALGO_FOUND TRUE)
-        message(STATUS "✅ uni-algo successfully downloaded and configured")
+    if(TARGET utf8cpp)
+        set(UTFCPP_FOUND TRUE)
+        message(STATUS "✅ utf8cpp successfully downloaded and configured")
         # target_compile_definitions는 라이브러리 연결 섹션에서 처리
     endif()
 endif()
@@ -240,12 +239,12 @@ if(RUNE_CASTER_ENABLE_SPDLOG)
     endif()
 endif()
 
-# Unicode 라이브러리 연결 (우선순위: uni-algo > ICU > fallback)
-if(UNI_ALGO_FOUND)
-    # uni-algo 대안 (가장 우선)
-    target_link_libraries(rune_caster PUBLIC uni-algo::uni-algo)
-    target_compile_definitions(rune_caster PRIVATE RUNE_CASTER_HAS_UNI_ALGO)
-    message(STATUS "✅ uni-algo Unicode library linked successfully")
+# Unicode 라이브러리 연결 (우선순위: utf8cpp > ICU > fallback)
+if(UTFCPP_FOUND)
+    # utf8cpp 대안 (가장 우선)
+    target_link_libraries(rune_caster PUBLIC utf8cpp)
+    target_compile_definitions(rune_caster PRIVATE RUNE_CASTER_HAS_UTFCPP)
+    message(STATUS "✅ utf8cpp Unicode library linked successfully")
 elseif(RUNE_CASTER_ENABLE_ICU)
     if(ICU_FOUND AND TARGET icu)
         # FetchContent ICU (viaduck/icu-cmake)
