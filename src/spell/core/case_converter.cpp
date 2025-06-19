@@ -2,9 +2,9 @@
 #include "rune_caster/unicode.hpp"
 #include <string>
 
-// Unicode 케이스 변환 라이브러리 (조건부 포함)
-#ifdef RUNE_CASTER_HAS_UNI_ALGO
-    #include <uni_algo/case.h>
+#ifdef RUNE_CASTER_HAS_UTFCPP
+    #include <utf8.h>
+    #include <cwctype>
 #elif defined(RUNE_CASTER_HAS_ICU)
     #include <unicode/uchar.h>
     #include <unicode/unistr.h>
@@ -15,41 +15,46 @@ namespace spell {
 namespace core {
 
 CaseConverter::CaseConverter(CaseType case_type)
-    : case_type_(case_type) {
-}
+    : case_type_(case_type) {}
 
 RuneSequence CaseConverter::operator()(const RuneSequence& input) const {
     if (input.empty()) {
         return RuneSequence();
     }
 
-    // Convert to UTF-8 for case conversion
     std::string utf8_text = input.to_utf8();
     std::string converted;
 
     try {
-#ifdef RUNE_CASTER_HAS_UNI_ALGO
-        // Use uni-algo for case conversion
-        switch (case_type_) {
-            case CaseType::Lower:
-                converted = una::cases::to_lowercase_utf8(utf8_text);
-                break;
-            case CaseType::Upper:
-                converted = una::cases::to_uppercase_utf8(utf8_text);
-                break;
-            case CaseType::Title:
-                converted = una::cases::to_titlecase_utf8(utf8_text);
-                break;
-            default:
-                converted = utf8_text;
-                break;
+#ifdef RUNE_CASTER_HAS_UTFCPP
+        std::u32string utf32;
+        utf8::utf8to32(utf8_text.begin(), utf8_text.end(), std::back_inserter(utf32));
+        bool at_word_start = true;
+        for (char32_t cp : utf32) {
+            char32_t out = cp;
+            switch (case_type_) {
+                case CaseType::Lower:
+                    out = static_cast<char32_t>(std::towlower(static_cast<wint_t>(cp)));
+                    break;
+                case CaseType::Upper:
+                    out = static_cast<char32_t>(std::towupper(static_cast<wint_t>(cp)));
+                    break;
+                case CaseType::Title:
+                    if (at_word_start)
+                        out = static_cast<char32_t>(std::towupper(static_cast<wint_t>(cp)));
+                    else
+                        out = static_cast<char32_t>(std::towlower(static_cast<wint_t>(cp)));
+                    at_word_start = unicode::is_whitespace(cp);
+                    break;
+                default:
+                    break;
+            }
+            utf8::append(out, std::back_inserter(converted));
         }
 #elif defined(RUNE_CASTER_HAS_ICU)
         // Use ICU for case conversion (placeholder implementation)
-        // TODO: Implement ICU case conversion
         converted = utf8_text;
 #else
-        // Use fallback ASCII-only implementation
         converted.reserve(utf8_text.size());
         bool at_word_start = true;
 
@@ -91,7 +96,6 @@ RuneSequence CaseConverter::operator()(const RuneSequence& input) const {
         }
 #endif
     } catch (...) {
-        // Fallback implementation for all error cases
         converted = utf8_text;
     }
 
