@@ -3,7 +3,7 @@
 #include <string>
 
 #ifdef RUNE_CASTER_HAS_UTFCPP
-    #include <utf8cpp/utf8.h>
+    #include <utf8.h>
 #elif defined(RUNE_CASTER_HAS_ICU)
     #include <unicode/normalizer2.h>
     #include <unicode/unistr.h>
